@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CageTrack — Player Development Tracking for Baseball</title>
+<meta name="description" content="CageTrack is the development tracking app built for baseball players 8U–18U. One player profile. Every coach connected. AI-powered feedback.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #1C2B35;
+    --wheat: #D4A96A;
+    --offwhite: #F7F3ED;
+    --slate: #3D4F5C;
+    --navy-light: #253844;
+    --wheat-dim: rgba(212, 169, 106, 0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--navy);
+    color: var(--offwhite);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    z-index: 9999;
+  }
+
+  /* ── Nav ── */
+  nav {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 100;
+    padding: 1.25rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    backdrop-filter: blur(20px);
+    background: rgba(28, 43, 53, 0.85);
+    border-bottom: 1px solid rgba(212, 169, 106, 0.08);
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.75rem;
+    letter-spacing: 0.08em;
+    color: var(--offwhite);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .logo-mark {
+    width: 32px;
+    height: 32px;
+    border: 2px solid var(--wheat);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    color: var(--wheat);
+    transform: rotate(-3deg);
+  }
+
+  .nav-cta {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.65rem 1.5rem;
+    border: 1px solid var(--wheat);
+    color: var(--wheat);
+    background: transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  .nav-cta:hover {
+    background: var(--wheat);
+    color: var(--navy);
+  }
+
+  /* ── Hero ── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 8rem 2rem 4rem;
+    position: relative;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -20%;
+    right: -10%;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--wheat-dim) 0%, transparent 70%);
+    pointer-events: none;
+    animation: float 8s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(-30px, 20px); }
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--wheat-dim);
+    border: 1px solid rgba(212, 169, 106, 0.2);
+    border-radius: 100px;
+    padding: 0.4rem 1.1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--wheat);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 2rem;
+  }
+
+  .hero-badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--wheat);
+    border-radius: 50%;
+    animation: pulse 2s ease infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .hero h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3.2rem, 9vw, 7.5rem);
+    line-height: 0.92;
+    letter-spacing: 0.02em;
+    margin-bottom: 1.5rem;
+  }
+
+  .accent {
+    color: var(--wheat);
+    position: relative;
+    display: inline-block;
+  }
+
+  .accent::after {
+    content: '';
+    position: absolute;
+    bottom: 0.08em;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--wheat);
+    opacity: 0.3;
+    border-radius: 2px;
+  }
+
+  .hero-sub {
+    font-size: clamp(1rem, 2.5vw, 1.2rem);
+    color: rgba(247, 243, 237, 0.6);
+    max-width: 560px;
+    line-height: 1.75;
+    margin-bottom: 2.5rem;
+  }
+
+  .hero-sub strong {
+    color: var(--offwhite);
+    font-weight: 600;
+  }
+
+  /* ── Email Form ── */
+  .waitlist-form {
+    display: flex;
+    gap: 0;
+    max-width: 480px;
+    width: 100%;
+    position: relative;
+  }
+
+  .waitlist-form input {
+    flex: 1;
+    padding: 1rem 1.25rem;
+    background: var(--navy-light);
+    border: 1px solid rgba(212, 169, 106, 0.15);
+    border-right: none;
+    border-radius: 6px 0 0 6px;
+    color: var(--offwhite);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+
+  .waitlist-form input::placeholder {
+    color: rgba(247, 243, 237, 0.3);
+  }
+
+  .waitlist-form input:focus {
+    border-color: var(--wheat);
+  }
+
+  .waitlist-form button {
+    padding: 1rem 2rem;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 0.1em;
+    background: var(--wheat);
+    color: var(--navy);
+    border: none;
+    border-radius: 0 6px 6px 0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+  }
+
+  .waitlist-form button:hover {
+    background: #e0b87a;
+    transform: translateY(-1px);
+  }
+
+  .form-note {
+    text-align: center;
+    margin-top: 0.75rem;
+    font-size: 0.78rem;
+    color: rgba(247, 243, 237, 0.3);
+  }
+
+  .form-success {
+    display: none;
+    text-align: center;
+    padding: 1rem;
+    color: var(--wheat);
+    font-weight: 600;
+    font-size: 1.1rem;
+  }
+
+  /* ── Divider ── */
+  .stitch-line {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 1.5rem 0;
+    opacity: 0.12;
+  }
+
+  .stitch-line span {
+    width: 12px;
+    height: 2px;
+    background: var(--wheat);
+    border-radius: 1px;
+    transform: rotate(25deg);
+  }
+
+  .stitch-line span:nth-child(even) {
+    transform: rotate(-25deg);
+  }
+
+  /* ── Section styling ── */
+  .section-wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 6rem 2rem;
+  }
+
+  .section-wrap.narrow {
+    max-width: 700px;
+  }
+
+  .section-wrap.center {
+    text-align: center;
+  }
+
+  .section-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--wheat);
+    margin-bottom: 1rem;
+  }
+
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.2rem, 5vw, 3.5rem);
+    line-height: 1;
+    margin-bottom: 1rem;
+  }
+
+  .section-desc {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: rgba(247, 243, 237, 0.55);
+    max-width: 520px;
+  }
+
+  .section-desc.centered {
+    margin: 0 auto;
+  }
+
+  /* ── Problem Section ── */
+  .problem-headline {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    line-height: 1.05;
+    margin-bottom: 2rem;
+    color: rgba(247, 243, 237, 0.85);
+  }
+
+  .problem-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+    margin-top: 2rem;
+    text-align: left;
+  }
+
+  .problem-card {
+    background: rgba(212, 169, 106, 0.04);
+    border: 1px solid rgba(212, 169, 106, 0.08);
+    border-radius: 10px;
+    padding: 1.75rem;
+  }
+
+  .problem-card .icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .problem-card h4 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.2rem;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.4rem;
+    color: rgba(247, 243, 237, 0.8);
+  }
+
+  .problem-card p {
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: rgba(247, 243, 237, 0.4);
+  }
+
+  /* ── Ecosystem Visual ── */
+  .ecosystem-svg-wrap {
+    margin-top: 3rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: center;
+  }
+
+  .ecosystem-svg-wrap svg {
+    width: 100%;
+    max-width: 700px;
+    height: auto;
+  }
+
+  .ecosystem-caption {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: rgba(247, 243, 237, 0.4);
+    font-style: italic;
+    max-width: 520px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+  }
+
+  /* ── Features ── */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-top: 3rem;
+  }
+
+  .feature-card {
+    background: var(--navy-light);
+    border: 1px solid rgba(212, 169, 106, 0.06);
+    border-radius: 12px;
+    padding: 2.25rem;
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--wheat), transparent);
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+
+  .feature-card:hover {
+    border-color: rgba(212, 169, 106, 0.15);
+    transform: translateY(-4px);
+  }
+
+  .feature-card:hover::before {
+    opacity: 1;
+  }
+
+  .feature-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    background: var(--wheat-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+    font-size: 1.4rem;
+  }
+
+  .feature-card h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.5rem;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.5rem;
+  }
+
+  .feature-card p {
+    font-size: 0.92rem;
+    line-height: 1.65;
+    color: rgba(247, 243, 237, 0.5);
+  }
+
+  .feature-card.highlight {
+    border-color: rgba(212, 169, 106, 0.2);
+    background: linear-gradient(135deg, var(--navy-light) 0%, rgba(212, 169, 106, 0.06) 100%);
+  }
+
+  .feature-tag {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--navy);
+    background: var(--wheat);
+    padding: 0.2rem 0.6rem;
+    border-radius: 3px;
+    margin-bottom: 1rem;
+  }
+
+  /* ── AI Showcase ── */
+  .ai-demo {
+    margin-top: 2.5rem;
+    background: var(--navy-light);
+    border: 1px solid rgba(212, 169, 106, 0.1);
+    border-radius: 14px;
+    overflow: hidden;
+    text-align: left;
+  }
+
+  .ai-demo-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgba(212, 169, 106, 0.08);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--wheat);
+  }
+
+  .ai-demo-header .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--wheat);
+    animation: pulse 2s ease infinite;
+  }
+
+  .ai-demo-input {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid rgba(212, 169, 106, 0.06);
+  }
+
+  .ai-demo-input .label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: rgba(247, 243, 237, 0.3);
+    margin-bottom: 0.5rem;
+  }
+
+  .ai-demo-input .text {
+    font-size: 0.95rem;
+    color: rgba(247, 243, 237, 0.8);
+    line-height: 1.5;
+    font-style: italic;
+  }
+
+  .ai-demo-output {
+    padding: 1.25rem 1.5rem;
+    background: rgba(212, 169, 106, 0.03);
+  }
+
+  .ai-demo-output .label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--wheat);
+    margin-bottom: 0.75rem;
+  }
+
+  .ai-drill {
+    padding: 0.6rem 0;
+    border-bottom: 1px solid rgba(212, 169, 106, 0.05);
+    display: flex;
+    gap: 0.75rem;
+    align-items: baseline;
+  }
+
+  .ai-drill:last-child { border-bottom: none; }
+
+  .ai-drill .num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    color: var(--wheat);
+    opacity: 0.5;
+    flex-shrink: 0;
+    width: 24px;
+  }
+
+  .ai-drill .content {
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: rgba(247, 243, 237, 0.6);
+  }
+
+  .ai-drill .content strong {
+    color: rgba(247, 243, 237, 0.85);
+    font-weight: 600;
+  }
+
+  /* ── How It Works ── */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+    margin-top: 3rem;
+    text-align: left;
+  }
+
+  .step {
+    padding-left: 1rem;
+    border-left: 2px solid rgba(212, 169, 106, 0.15);
+  }
+
+  .step-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    color: var(--wheat);
+    opacity: 0.25;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+
+  .step h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.4rem;
+  }
+
+  .step p {
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: rgba(247, 243, 237, 0.45);
+  }
+
+  /* ── Pricing ── */
+  .pricing-card {
+    background: var(--navy-light);
+    border: 1px solid rgba(212, 169, 106, 0.12);
+    border-radius: 16px;
+    padding: 3rem;
+    margin-top: 3rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .pricing-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--wheat), rgba(212, 169, 106, 0.2));
+  }
+
+  .pricing-options {
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .price-option { text-align: center; }
+
+  .price-amount {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3.5rem;
+    color: var(--wheat);
+    line-height: 1;
+  }
+
+  .price-period {
+    font-size: 0.85rem;
+    color: rgba(247, 243, 237, 0.4);
+    margin-top: 0.15rem;
+  }
+
+  .price-save {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--wheat);
+    background: var(--wheat-dim);
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+    margin-top: 0.5rem;
+  }
+
+  .pricing-divider {
+    width: 1px;
+    background: rgba(212, 169, 106, 0.15);
+    align-self: stretch;
+  }
+
+  .pricing-perks {
+    list-style: none;
+    text-align: left;
+    max-width: 400px;
+    margin: 0 auto 2rem;
+  }
+
+  .pricing-perks li {
+    padding: 0.5rem 0;
+    font-size: 0.95rem;
+    color: rgba(247, 243, 237, 0.65);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .pricing-perks li::before {
+    content: '◆';
+    color: var(--wheat);
+    font-size: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  .pricing-note {
+    font-size: 0.82rem;
+    color: rgba(247, 243, 237, 0.35);
+    margin-top: 1.5rem;
+    font-style: italic;
+  }
+
+  /* ── CTA Bottom ── */
+  .cta-bottom {
+    text-align: center;
+    padding: 6rem 2rem;
+    position: relative;
+  }
+
+  .cta-bottom::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--wheat-dim) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .cta-bottom h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    line-height: 0.95;
+    margin-bottom: 1rem;
+    position: relative;
+  }
+
+  .cta-bottom p {
+    color: rgba(247, 243, 237, 0.5);
+    margin-bottom: 2rem;
+    font-size: 1.05rem;
+    position: relative;
+  }
+
+  /* ── Footer ── */
+  footer {
+    border-top: 1px solid rgba(212, 169, 106, 0.08);
+    padding: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.78rem;
+    color: rgba(247, 243, 237, 0.25);
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  footer a {
+    color: rgba(247, 243, 237, 0.4);
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  footer a:hover { color: var(--wheat); }
+
+  /* ── Mobile ── */
+  @media (max-width: 900px) {
+    .features-grid { grid-template-columns: repeat(2, 1fr); }
+    .steps { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 640px) {
+    nav { padding: 1rem 1.25rem; }
+    .logo { font-size: 1.4rem; }
+    .nav-cta { padding: 0.5rem 1rem; font-size: 0.75rem; }
+    .hero { padding: 7rem 1.5rem 3rem; }
+
+    .waitlist-form {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .waitlist-form input {
+      border-right: 1px solid rgba(212, 169, 106, 0.15);
+      border-radius: 6px;
+    }
+
+    .waitlist-form button {
+      border-radius: 6px;
+      padding: 0.9rem;
+    }
+
+    .problem-cards { grid-template-columns: 1fr; }
+    .features-grid { grid-template-columns: 1fr; }
+    .steps { grid-template-columns: 1fr; }
+
+    .pricing-options { gap: 2rem; }
+    .pricing-divider { width: 100%; height: 1px; }
+
+    .section-wrap { padding: 4rem 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <a href="#" class="logo">
+    <div class="logo-mark">CT</div>
+    CAGETRACK
+  </a>
+  <a href="#waitlist-bottom" class="nav-cta">Join Waitlist</a>
+</nav>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-badge">Coming Soon</div>
+  <h1>ONE PLAYER.<br>EVERY COACH.<br>ONE <span class="accent">DEVELOPMENT</span> PLAN.</h1>
+  <p class="hero-sub">Your player works with a head coach, a hitting coach, a private instructor — but none of them talk to each other. <strong>CageTrack connects the entire coaching ecosystem</strong> into one player profile with AI-powered development feedback.</p>
+
+  <div id="waitlist-top">
+    <div class="waitlist-form" id="form-top">
+      <input type="email" id="email-top" placeholder="your@email.com" required>
+      <button onclick="submitWaitlist('top')">GET EARLY ACCESS</button>
+    </div>
+    <div class="form-success" id="success-top">You're on the list. We'll be in touch soon.</div>
+    <p class="form-note">Free during beta. No credit card required.</p>
+  </div>
+</div>
+
+<!-- Problem Section -->
+<div class="stitch-line">
+  <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+</div>
+
+<div class="section-wrap center">
+  <div class="section-label">The Problem</div>
+  <div class="problem-headline">Your Player's Development Is Scattered Across Texts, Clipboards, and Memory</div>
+
+  <div class="problem-cards">
+    <div class="problem-card">
+      <div class="icon">🔀</div>
+      <h4>Disconnected Coaches</h4>
+      <p>The hitting coach assigns one thing. The head coach works on something else. The private instructor doesn't know what either of them said.</p>
+    </div>
+    <div class="problem-card">
+      <div class="icon">📋</div>
+      <h4>Nothing Gets Tracked</h4>
+      <p>A coach sees something in a lesson, mentions it, and it disappears. No record. No follow-up. No plan.</p>
+    </div>
+    <div class="problem-card">
+      <div class="icon">🔄</div>
+      <h4>Teams Change. Progress Vanishes.</h4>
+      <p>Player moves to a new team and starts over. The new coach has no idea what they've been working on.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Ecosystem -->
+<div class="section-wrap center">
+  <div class="section-label">The Solution</div>
+  <div class="section-title">A Unified Development Ecosystem</div>
+  <p class="section-desc centered">Every coach your player works with feeds into one profile. One dashboard. One development story.</p>
+
+  <div class="ecosystem-svg-wrap">
+    <svg viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="rgba(212,169,106,0.5)" />
+        </marker>
+        <linearGradient id="playerGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:rgba(212,169,106,0.15)" />
+          <stop offset="100%" style="stop-color:rgba(212,169,106,0.03)" />
+        </linearGradient>
+      </defs>
+
+      <!-- Connection lines with arrows -->
+      <line x1="168" y1="105" x2="272" y2="175" stroke="rgba(212,169,106,0.25)" stroke-width="2" marker-end="url(#arrowhead)" />
+      <line x1="532" y1="105" x2="428" y2="175" stroke="rgba(212,169,106,0.25)" stroke-width="2" marker-end="url(#arrowhead)" />
+      <line x1="168" y1="335" x2="272" y2="255" stroke="rgba(212,169,106,0.25)" stroke-width="2" marker-end="url(#arrowhead)" />
+      <line x1="532" y1="335" x2="428" y2="255" stroke="rgba(212,169,106,0.25)" stroke-width="2" marker-end="url(#arrowhead)" />
+
+      <!-- Head Coach node (top left) -->
+      <rect x="30" y="60" width="180" height="88" rx="12" fill="#253844" stroke="rgba(212,169,106,0.12)" stroke-width="1" />
+      <text x="120" y="98" text-anchor="middle" fill="#F7F3ED" font-family="'Bebas Neue', sans-serif" font-size="18" letter-spacing="1">HEAD COACH</text>
+      <text x="120" y="120" text-anchor="middle" fill="rgba(247,243,237,0.4)" font-family="'DM Sans', sans-serif" font-size="11">Game-day observations</text>
+
+      <!-- Hitting Coach node (top right) -->
+      <rect x="490" y="60" width="180" height="88" rx="12" fill="#253844" stroke="rgba(212,169,106,0.12)" stroke-width="1" />
+      <text x="580" y="98" text-anchor="middle" fill="#F7F3ED" font-family="'Bebas Neue', sans-serif" font-size="18" letter-spacing="1">HITTING COACH</text>
+      <text x="580" y="120" text-anchor="middle" fill="rgba(247,243,237,0.4)" font-family="'DM Sans', sans-serif" font-size="11">Drill assignments & feedback</text>
+
+      <!-- Player Profile node (center) -->
+      <rect x="250" y="160" width="200" height="100" rx="14" fill="url(#playerGlow)" stroke="#D4A96A" stroke-width="2" />
+      <text x="350" y="200" text-anchor="middle" fill="#D4A96A" font-family="'Bebas Neue', sans-serif" font-size="22" letter-spacing="1.5">PLAYER PROFILE</text>
+      <text x="350" y="225" text-anchor="middle" fill="rgba(247,243,237,0.5)" font-family="'DM Sans', sans-serif" font-size="12">Owned by the family</text>
+      <text x="350" y="245" text-anchor="middle" fill="rgba(247,243,237,0.35)" font-family="'DM Sans', sans-serif" font-size="10">All development in one place</text>
+
+      <!-- Private Instructor node (bottom left) -->
+      <rect x="30" y="290" width="180" height="88" rx="12" fill="#253844" stroke="rgba(212,169,106,0.12)" stroke-width="1" />
+      <text x="120" y="328" text-anchor="middle" fill="#F7F3ED" font-family="'Bebas Neue', sans-serif" font-size="18" letter-spacing="1">PRIVATE INSTRUCTOR</text>
+      <text x="120" y="350" text-anchor="middle" fill="rgba(247,243,237,0.4)" font-family="'DM Sans', sans-serif" font-size="11">Skill-specific development</text>
+
+      <!-- Future Coaches node (bottom right) -->
+      <rect x="490" y="290" width="180" height="88" rx="12" fill="#253844" stroke="rgba(212,169,106,0.12)" stroke-width="1" />
+      <text x="580" y="328" text-anchor="middle" fill="#F7F3ED" font-family="'Bebas Neue', sans-serif" font-size="18" letter-spacing="1">FUTURE COACHES</text>
+      <text x="580" y="350" text-anchor="middle" fill="rgba(247,243,237,0.4)" font-family="'DM Sans', sans-serif" font-size="11">Full history on day one</text>
+    </svg>
+  </div>
+
+  <p class="ecosystem-caption">The hitting coach assigns a tee drill and logs "hands are casting." The head coach opens the dashboard and sees it — no texts, no emails, no guessing.</p>
+</div>
+
+<div class="stitch-line">
+  <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+</div>
+
+<!-- Features -->
+<div class="section-wrap">
+  <div class="section-label">Features</div>
+  <div class="section-title">Built for Development. Not Scorekeeping.</div>
+  <p class="section-desc">CageTrack isn't a stats app. It's where the real work gets tracked — the drills, the observations, the plan.</p>
+
+  <div class="features-grid">
+    <div class="feature-card highlight">
+      <div class="feature-tag">AI-Powered</div>
+      <div class="feature-icon">🧠</div>
+      <h3>Custom Development Feedback</h3>
+      <p>Coach types what they're observing — "stepping in the bucket on offspeed" — and CageTrack AI generates a targeted drill plan with progressions to address that specific issue.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">📋</div>
+      <h3>Drill Assignments</h3>
+      <p>Coaches assign drills from a structured drill library. Players and families see what's assigned, and every coach on the profile can see what the others have prescribed.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">👁️</div>
+      <h3>Coach Observations</h3>
+      <p>Coaches log what they see in plain language. It goes on the record. It builds over time. Nothing gets lost between sessions anymore.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">🔗</div>
+      <h3>Unified Player Dashboard</h3>
+      <p>Head coach, hitting coach, private instructor — everyone contributes to one player profile. The family and all connected coaches see the full picture.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">📱</div>
+      <h3>Mobile-First PWA</h3>
+      <p>Works on any phone, installs like an app. Built for the cage, the dugout, and the car ride home. No app store required.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">🔒</div>
+      <h3>Family-Owned Profile</h3>
+      <p>The family owns the player's development data. Coaches come and go, teams change — the profile and its entire history travels with the player.</p>
+    </div>
+  </div>
+</div>
+
+<!-- AI Demo -->
+<div class="section-wrap narrow center">
+  <div class="section-label">See It In Action</div>
+  <div class="section-title">Coach Observes. AI Responds.</div>
+  <p class="section-desc centered">Real coaching intelligence — not generic tips.</p>
+
+  <div class="ai-demo">
+    <div class="ai-demo-header">
+      <div class="dot"></div> CageTrack AI
+    </div>
+    <div class="ai-demo-input">
+      <div class="label">Coach Observation</div>
+      <div class="text">"Dropping back elbow on outside pitches. Gets jammed inside but decent bat path when he stays through the ball."</div>
+    </div>
+    <div class="ai-demo-output">
+      <div class="label">⚡ AI Development Plan</div>
+      <div class="ai-drill">
+        <div class="num">01</div>
+        <div class="content"><strong>High Tee Outside Corner</strong> — 3 sets of 10. Focus on keeping back elbow in slot. Freeze at contact to check hand position.</div>
+      </div>
+      <div class="ai-drill">
+        <div class="num">02</div>
+        <div class="content"><strong>Inside-Outside Tee Sequence</strong> — Alternate inside and outside placement. 2 sets of 8. Build recognition without cheating to one side.</div>
+      </div>
+      <div class="ai-drill">
+        <div class="num">03</div>
+        <div class="content"><strong>Front Toss, Outside Only</strong> — 3 rounds of 10. Coach calls "yes/no" on elbow position each rep. Progress to mixed locations in week 2.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="stitch-line">
+  <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+</div>
+
+<!-- How It Works -->
+<div class="section-wrap center">
+  <div class="section-label">How It Works</div>
+  <div class="section-title">Three Roles. One Player Profile.</div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">01</div>
+      <h3>Family Signs Up</h3>
+      <p>Create your player's profile — age, positions, current team. One paid account covers the player and every coach they work with.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <h3>Coaches Connect Free</h3>
+      <p>Invite your head coach, hitting coach, private instructor — anyone. They get a free account and contribute to the player's profile.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <h3>Coaches Observe & Assign</h3>
+      <p>Coaches log observations, assign drills from the library, and flag development areas. CageTrack AI generates custom feedback and drill plans.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <h3>Full Picture, Always</h3>
+      <p>Every coach sees what the others are working on. The family sees the whole development story — not fragments.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Pricing -->
+<div class="section-wrap narrow center">
+  <div class="section-label">Simple Pricing</div>
+  <div class="section-title">One Account. Whole Ecosystem.</div>
+  <p class="section-desc centered">The family invests in their player's development. Coaches always free.</p>
+
+  <div class="pricing-card">
+    <div class="pricing-options">
+      <div class="price-option">
+        <div class="price-amount">$20</div>
+        <div class="price-period">per month</div>
+      </div>
+      <div class="pricing-divider"></div>
+      <div class="price-option">
+        <div class="price-amount">$200</div>
+        <div class="price-period">per year</div>
+        <div class="price-save">Save $40</div>
+      </div>
+    </div>
+
+    <ul class="pricing-perks">
+      <li>Unlimited coach connections — all free</li>
+      <li>AI-powered development feedback</li>
+      <li>Structured drill assignments & tracking</li>
+      <li>Coach observations & development timeline</li>
+      <li>Family-owned player profile</li>
+      <li>Mobile-first — works on any device</li>
+    </ul>
+
+    <p class="pricing-note">Every coach your player works with gets a free account. Head coach, hitting coach, private instructor — no limits, no fees.</p>
+  </div>
+</div>
+
+<!-- Bottom CTA -->
+<div class="cta-bottom" id="waitlist-bottom">
+  <h2>STOP LOSING THE<br><span class="accent">DEVELOPMENT STORY.</span></h2>
+  <p>Join the waitlist. Be first when we launch.</p>
+
+  <div class="waitlist-form" id="form-bottom" style="margin: 0 auto;">
+    <input type="email" id="email-bottom" placeholder="your@email.com" required>
+    <button onclick="submitWaitlist('bottom')">GET EARLY ACCESS</button>
+  </div>
+  <div class="form-success" id="success-bottom">You're on the list. We'll be in touch soon.</div>
+  <p class="form-note">Free during beta. No credit card required.</p>
+</div>
+
+<!-- Footer -->
+<footer>
+  <span>&copy; 2026 CageTrack. Built for baseball families.</span>
+  <span>
+    <a href="/cdn-cgi/l/email-protection#432b262f2f2c032022242637312220286d202c2e"><span class="__cf_email__" data-cfemail="39515c555556795a585e5c4d4b585a52175a5654">[email&#160;protected]</span></a>
+  </span>
+</footer>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+function submitWaitlist(position) {
+  const email = document.getElementById('email-' + position).value;
+  if (!email || !email.includes('@')) {
+    document.getElementById('email-' + position).style.borderColor = '#e74c3c';
+    return;
+  }
+
+  document.getElementById('form-' + position).style.display = 'none';
+  document.getElementById('success-' + position).style.display = 'block';
+
+  // Wire to Google Forms:
+  // const formData = new FormData();
+  // formData.append('entry.XXXXXXX', email);
+  // fetch('https://docs.google.com/forms/d/e/YOUR_FORM_ID/formResponse', {
+  //   method: 'POST', mode: 'no-cors', body: formData
+  // });
+
+  console.log('
