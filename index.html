@@ -1068,14 +1068,23 @@
 <footer>
   <span>&copy; 2026 CageTrack. Built for baseball families.</span>
   <span>
-    <a href="/cdn-cgi/l/email-protection#432b262f2f2c032022242637312220286d202c2e"><span class="__cf_email__" data-cfemail="39515c555556795a585e5c4d4b585a52175a5654">[email&#160;protected]</span></a>
+    <a id="contact-email" href="#">contact</a>
   </span>
 </footer>
  
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
+// Build email dynamically to prevent Cloudflare email encoding
+(function() {
+  var u = 'hello';
+  var d = 'cagetrack.com';
+  var el = document.getElementById('contact-email');
+  el.href = 'mailto:' + u + '@' + d;
+  el.textContent = u + '@' + d;
+})();
+ 
 function submitWaitlist(position) {
-  const email = document.getElementById('email-' + position).value;
-  if (!email || !email.includes('@')) {
+  var email = document.getElementById('email-' + position).value;
+  if (!email || email.indexOf('@') === -1) {
     document.getElementById('email-' + position).style.borderColor = '#e74c3c';
     return;
   }
@@ -1083,10 +1092,18 @@ function submitWaitlist(position) {
   document.getElementById('form-' + position).style.display = 'none';
   document.getElementById('success-' + position).style.display = 'block';
  
-  const formData = new FormData();
+  var formData = new FormData();
   formData.append('entry.1557033316', email);
   fetch('https://docs.google.com/forms/d/e/1FAIpQLSfPeyo790QtG3jx0UOkRdmYdFZa772lInHXlOmFNQijxgLNRg/formResponse', {
     method: 'POST', mode: 'no-cors', body: formData
   });
+}
  
-  console.log('
+document.querySelector('.nav-cta').addEventListener('click', function(e) {
+  e.preventDefault();
+  document.getElementById('waitlist-bottom').scrollIntoView({ behavior: 'smooth' });
+});
+</script>
+ 
+</body>
+</html>
