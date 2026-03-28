@@ -118,8 +118,7 @@ export default function SettingsPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    // Look up the parent link code
-const { error: updateError } = await supabase
+    const { error: updateError } = await supabase
       .from('parent_links')
       .update({
         parent_user_id: user.id,
@@ -136,6 +135,7 @@ const { error: updateError } = await supabase
 
     setLinkLoading(false);
     window.location.href = '/dashboard';
+  }
 
     // Update the parent link with this user's ID and activate it
     const { error: updateError } = await supabase
