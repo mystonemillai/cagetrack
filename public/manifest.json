@@ -1,0 +1,21 @@
+{
+  "name": "CageTrack",
+  "short_name": "CageTrack",
+  "description": "Player Development Tracking for Baseball",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#1C2B35",
+  "theme_color": "#1C2B35",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
