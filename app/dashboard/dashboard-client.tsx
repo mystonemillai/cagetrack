@@ -7,9 +7,7 @@ import Link from 'next/link';
 
 interface DashboardClientProps {
   profile: any;
-  ownedPlayers: any[];
-  coachProfile: any;
-  connectedPlayers: any[];
+  userId: string;
 }
 
 const AGE_GROUPS = ['8U','9U','10U','11U','12U','13U','14U','15U','16U','17U','18U'];
@@ -26,9 +24,7 @@ function generateInviteCode() {
 
 export default function DashboardClient({
   profile,
-  ownedPlayers,
-  coachProfile,
-  connectedPlayers,
+  userId,
 }: DashboardClientProps) {
   const supabase = createClient();
   const router = useRouter();
@@ -36,7 +32,51 @@ export default function DashboardClient({
   const isCoach = profile?.role === 'coach';
   const isPlayer = profile?.role === 'player';
   const isFamily = profile?.role === 'family';
+
+  const [ownedPlayers, setOwnedPlayers] = useState<any[]>([]);
+  const [coachProfile, setCoachProfile] = useState<any>(null);
+  const [connectedPlayers, setConnectedPlayers] = useState<any[]>([]);
+  const [dataLoaded, setDataLoaded] = useState(false);
+
+  useState(() => {
+    async function loadData() {
+      const { data: players } = await supabase
+        .from('players')
+        .select('*')
+        .eq('owner_user_id', userId);
+      setOwnedPlayers(players || []);
+
+      if (isCoach) {
+        const { data: cp } = await supabase
+          .from('coach_profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+        setCoachProfile(cp);
+
+        if (cp) {
+          const { data: connected } = await supabase
+            .from('player_coaches')
+            .select('*, players(*)')
+            .eq('coach_profile_id', cp.id)
+            .eq('status', 'active');
+          setConnectedPlayers(connected || []);
+        }
+      }
+      setDataLoaded(true);
+    }
+    loadData();
+  });
+
   const hasPlayers = ownedPlayers.length > 0;
+
+  if (!dataLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-wheat font-display text-xl animate-pulse">Loading...</div>
+      </div>
+    );
+  }
 
   // Player creation form
   const [showCreatePlayer, setShowCreatePlayer] = useState(false);
