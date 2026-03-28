@@ -10,7 +10,6 @@ export default async function DashboardPage() {
 
   if (!user) redirect('/auth/login');
 
-  // Get profile
   const { data: profile } = await supabase
     .from('profiles')
     .select('*')
