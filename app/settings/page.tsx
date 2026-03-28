@@ -136,7 +136,7 @@ export default function SettingsPage() {
     const { error: updateError } = await supabase
       .from('parent_links')
       .update({
-        parent_user_id: user.id,
+        parent_user_id: null,
         status: 'active',
       })
       .eq('id', data.id);
