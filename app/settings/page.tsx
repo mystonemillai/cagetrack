@@ -65,7 +65,7 @@ export default function SettingsPage() {
 
     const { error } = await supabase.from('parent_links').insert({
       player_id: selectedPlayer,
-      parent_user_id: profile.id,
+      parent_user_id: null,
       access_level: 'view_only',
       status: 'pending',
       link_code: code,
@@ -78,7 +78,7 @@ export default function SettingsPage() {
     }
 
     setParentCode(code);
-    setCodeSuccess('Share this code with your parent. They enter it after signing up.');
+    setCodeSuccess('');
     setCodeLoading(false);
   }
 
@@ -119,18 +119,23 @@ export default function SettingsPage() {
     if (!user) return;
 
     // Look up the parent link code
-    const { data, error: lookupError } = await supabase
+const { error: updateError } = await supabase
       .from('parent_links')
-      .select('*, players(first_name, last_name)')
+      .update({
+        parent_user_id: user.id,
+        status: 'active',
+      })
       .eq('link_code', linkCode.trim().toUpperCase())
-      .eq('status', 'pending')
-      .single();
+      .eq('status', 'pending');
 
-    if (lookupError || !data) {
-      setLinkError('Invalid or expired code. Ask your player to generate a new one.');
+    if (updateError) {
+      setLinkError(updateError.message);
       setLinkLoading(false);
       return;
     }
+
+    setLinkLoading(false);
+    window.location.href = '/dashboard';
 
     // Update the parent link with this user's ID and activate it
     const { error: updateError } = await supabase
