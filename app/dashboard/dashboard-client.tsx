@@ -112,7 +112,7 @@ export default function DashboardClient({
     }
 
     setCreateLoading(false);
-    router.refresh();
+   window.location.href = '/dashboard';
   }
 
   // ── PLAYER CREATION FORM ──
