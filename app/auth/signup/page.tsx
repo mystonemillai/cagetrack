@@ -6,7 +6,7 @@ import Link from 'next/link';
 
 export default function SignupPage() {
   const [step, setStep] = useState<'role' | 'details'>('role');
-  const [role, setRole] = useState<'player' | 'family'>('player');
+  const [role, setRole] = useState<'player' | 'family' | 'coach'>('player');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -62,16 +62,45 @@ export default function SignupPage() {
     );
   }
 
+  const roleConfig = {
+    player: {
+      title: 'Create Your Profile',
+      subtitle: 'Own your development story.',
+      namePlaceholder: 'Your name',
+    },
+    family: {
+      title: 'Set Up Your Player',
+      subtitle: "You'll create your player's profile next.",
+      namePlaceholder: 'Parent name',
+    },
+    coach: {
+      title: 'Create Your Coach Account',
+      subtitle: 'Connect with your players after signup.',
+      namePlaceholder: 'Coach name',
+    },
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center p-6">
       <div className="max-w-md w-full">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 justify-center mb-8">
+        <Link href="/" className="flex items-center gap-2 justify-center mb-6">
           <div className="w-8 h-8 rounded-md border-2 border-wheat flex items-center justify-center text-wheat font-display text-sm -rotate-3">
             CT
           </div>
           <span className="font-display text-2xl tracking-wider">CAGETRACK</span>
         </Link>
+
+        {/* Login bar - always visible */}
+        <div className="mb-8 p-3 rounded-lg bg-navy-light border border-wheat/10 flex items-center justify-between">
+          <span className="text-sm text-offwhite/50">Already have an account?</span>
+          <Link
+            href="/auth/login"
+            className="px-4 py-1.5 bg-wheat/10 border border-wheat/20 text-wheat text-sm font-semibold rounded-md hover:bg-wheat/20 transition-colors"
+          >
+            Log In
+          </Link>
+        </div>
 
         {step === 'role' ? (
           <>
@@ -104,22 +133,22 @@ export default function SignupPage() {
               </button>
 
               <button
-                onClick={() => { window.location.href = '/auth/login'; }}
+                onClick={() => { setRole('coach'); setStep('details'); }}
                 className="w-full p-5 rounded-xl bg-navy-light border border-wheat/10 hover:border-wheat/30 transition-all text-left group"
               >
                 <div className="font-display text-xl tracking-wide mb-1 group-hover:text-wheat transition-colors">
                   I&apos;m a Coach
                 </div>
                 <div className="text-sm text-offwhite/40">
-                  Have an invite code? Sign up and connect to your player.
+                  Create a free coach account. Connect with players via invite code.
                 </div>
               </button>
             </div>
 
             <p className="text-center text-offwhite/30 text-sm mt-6">
-              Already have an account?{' '}
-              <Link href="/auth/login" className="text-wheat hover:underline">
-                Log in
+              Have a player invite code?{' '}
+              <Link href="/auth/claim-profile" className="text-wheat hover:underline">
+                Claim Your Profile
               </Link>
             </p>
           </>
@@ -133,12 +162,10 @@ export default function SignupPage() {
             </button>
 
             <h1 className="font-display text-4xl text-center mb-2">
-              {role === 'player' ? 'Create Your Profile' : 'Set Up Your Player'}
+              {roleConfig[role].title}
             </h1>
             <p className="text-offwhite/50 text-center mb-8">
-              {role === 'player'
-                ? 'Own your development story.'
-                : "You'll create your player's profile next."}
+              {roleConfig[role].subtitle}
             </p>
 
             <form onSubmit={handleSignup} className="space-y-4">
@@ -152,7 +179,7 @@ export default function SignupPage() {
                   onChange={(e) => setName(e.target.value)}
                   required
                   className="w-full p-3 bg-navy-light border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors"
-                  placeholder={role === 'player' ? 'Your name' : 'Parent name'}
+                  placeholder={roleConfig[role].namePlaceholder}
                 />
               </div>
 
@@ -185,6 +212,12 @@ export default function SignupPage() {
                 />
               </div>
 
+              {role === 'coach' && (
+                <div className="p-3 rounded-lg bg-wheat/5 border border-wheat/10 text-xs text-offwhite/50">
+                  Coach accounts are always free. After signup, you can connect to players using their invite code.
+                </div>
+              )}
+
               {error && (
                 <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
                   {error}
@@ -199,13 +232,6 @@ export default function SignupPage() {
                 {loading ? 'Creating Account...' : 'Create Account'}
               </button>
             </form>
-
-            <p className="text-center text-offwhite/30 text-sm mt-6">
-              Already have an account?{' '}
-              <Link href="/auth/login" className="text-wheat hover:underline">
-                Log in
-              </Link>
-            </p>
           </>
         )}
       </div>
