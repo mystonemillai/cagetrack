@@ -15,7 +15,7 @@ export default async function DrillsPage() {
     .order('sort_order');
 
   const categories = [
-    'Hitting', 'Pitching Fundamentals', 'Pitcher Accuracy', 'Pitcher Recovery',
+    'Hitting', 'Pitching Fundamentals', 'Pitching Accuracy', 'Pitcher Recovery',
     'Catcher', 'First Base', 'Third Base', 'Middle Infield',
     'Infield Fundamentals', 'Outfield Fundamentals', 'Center Field',
     'Corner Outfield', 'Mental Game'
