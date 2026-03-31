@@ -127,16 +127,43 @@ export default function PlayerDetailPage() {
     e.preventDefault();
     if (!coachProfile || !aiInput) return;
     setAiError(''); setAiGenerating(true);
-    const aiResponse = `**Development Plan for ${player?.first_name || 'Player'}**\n\nBased on observation: "${aiInput}"\n\n**Week 1-2: Foundation**\n- Focus on identifying the root cause\n- 3 sets of targeted reps daily\n- Film review after each session\n\n**Week 3-4: Progression**\n- Increase intensity and game-speed reps\n- Coach feedback after each session\n- Track improvement markers\n\n*AI-generated plans with Claude API coming soon.*`;
 
-    const { error } = await supabase.from('ai_plans').insert({
-      player_id: playerId, coach_profile_id: coachProfile.id, observation_id: null,
-      input_text: aiInput, ai_response: aiResponse, status: 'active',
-    });
+    try {
+      const recentObs = observations.slice(0, 5).map((o: any) => o.observation_text);
 
-    if (error) { setAiError(error.message); setAiGenerating(false); return; }
-    setAiInput(''); setShowAiForm(false); setAiGenerating(false);
-    window.location.reload();
+      const response = await fetch('/api/ai/generate-plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          observation: aiInput,
+          playerName: player?.first_name || 'Player',
+          ageGroup: player?.age_group || '',
+          sport: player?.sport || 'Baseball',
+          positions: player?.positions || [],
+          recentObservations: recentObs,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setAiError(data.error || 'Failed to generate plan. Please try again.');
+        setAiGenerating(false);
+        return;
+      }
+
+      const { error } = await supabase.from('ai_plans').insert({
+        player_id: playerId, coach_profile_id: coachProfile.id, observation_id: null,
+        input_text: aiInput, ai_response: data.plan, status: 'active',
+      });
+
+      if (error) { setAiError(error.message); setAiGenerating(false); return; }
+      setAiInput(''); setShowAiForm(false); setAiGenerating(false);
+      window.location.reload();
+    } catch (err: any) {
+      setAiError(err.message || 'Something went wrong');
+      setAiGenerating(false);
+    }
   }
 
   function formatDate(dateStr: string) {
