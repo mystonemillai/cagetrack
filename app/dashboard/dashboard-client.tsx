@@ -187,7 +187,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
           <p className="text-offwhite/40 mt-1">{isCoach ? 'Your coaching dashboard' : isPlayer ? 'Your development dashboard' : "Your player's development"}</p>
         </div>
 
-        {!isCoach && hasPlayers && (
+        {!isCoach && (
           <>
             <div className="space-y-4 mb-8">
               {ownedPlayers.map((player) => (
