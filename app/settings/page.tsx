@@ -182,9 +182,8 @@ export default function SettingsPage() {
 
           {(isPlayer || isFamily) && players.length > 0 && (
             <div className="rounded-xl bg-navy-light border border-wheat/8 p-6">
-              <h2 className="font-display text-lg text-wheat mb-1">Link a Parent</h2>
-              <p className="text-xs text-offwhite/40 mb-4">Generate a code to share with your parent so they can follow your progress.</p>
-
+              <h2 className="font-display text-lg text-wheat mb-1">{isPlayer ? 'Link a Parent' : 'Invite Your Player'}</h2>
+              <p className="text-xs text-offwhite/40 mb-4">{isPlayer ? 'Generate a code to share with your parent so they can follow your progress.' : 'Generate a code to share with your player so you can track their development.'}</p>
               {players.length > 1 && (
                 <div className="mb-3">
                   <label className="block text-xs uppercase tracking-widest text-offwhite/40 mb-2">Select Player</label>
