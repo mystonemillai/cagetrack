@@ -98,7 +98,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
   }
 
   // ── PLAYER CREATION FORM ──
-  if (showCreatePlayer || (!hasPlayers && !isCoach)) {
+  if (showCreatePlayer) {
     return (
       <div className="min-h-screen">
         <nav className="fixed top-0 w-full z-50 px-4 py-3 bg-navy/90 backdrop-blur-xl border-b border-wheat/8">
