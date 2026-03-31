@@ -5,6 +5,9 @@ import { createClient } from '@/lib/supabase-browser';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 
+const DRILL_CATEGORIES = ['Hitting', 'Pitching Fundamentals', 'Pitching Accuracy', 'Pitcher Recovery', 'Catcher', 'First Base', 'Third Base', 'Middle Infield', 'Infield Fundamentals', 'Outfield Fundamentals', 'Center Field', 'Corner Outfield', 'Mental Game'];
+const OBS_CATEGORIES = ['Hitting', 'Pitching', 'Fielding', 'Catching', 'Baserunning', 'Mental Game', 'General'];
+
 export default function PlayerDetailPage() {
   const supabase = createClient();
   const router = useRouter();
@@ -20,27 +23,26 @@ export default function PlayerDetailPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
 
-  // Observation form
   const [showObsForm, setShowObsForm] = useState(false);
   const [obsText, setObsText] = useState('');
   const [obsCategory, setObsCategory] = useState('');
   const [obsSaving, setObsSaving] = useState(false);
   const [obsError, setObsError] = useState('');
 
-  // AI Plan form
   const [showAiForm, setShowAiForm] = useState(false);
   const [aiInput, setAiInput] = useState('');
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiError, setAiError] = useState('');
 
-  // Drill assignment
-  const [showDrillAssign, setShowDrillAssign] = useState(false);
+  // Drill assignment state
   const [drillSearch, setDrillSearch] = useState('');
   const [drillResults, setDrillResults] = useState<any[]>([]);
+  const [selectedDrillCategory, setSelectedDrillCategory] = useState('');
+  const [categoryDrills, setCategoryDrills] = useState<any[]>([]);
+  const [categoryLoading, setCategoryLoading] = useState(false);
+  const [assigningDrillId, setAssigningDrillId] = useState<string | null>(null);
   const [assignNote, setAssignNote] = useState('');
-  const [assignSaving, setAssignSaving] = useState(false);
-
-  const OBS_CATEGORIES = ['Hitting', 'Pitching', 'Fielding', 'Catching', 'Baserunning', 'Mental Game', 'General'];
+  const [showAssignNote, setShowAssignNote] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -77,95 +79,72 @@ export default function PlayerDetailPage() {
   async function handleAddObservation(e: React.FormEvent) {
     e.preventDefault();
     if (!coachProfile || !obsText) return;
-    setObsError('');
-    setObsSaving(true);
-
-    const { error } = await supabase.from('observations').insert({
-      player_id: playerId,
-      coach_profile_id: coachProfile.id,
-      observation_text: obsText,
-      category: obsCategory || null,
-    });
-
+    setObsError(''); setObsSaving(true);
+    const { error } = await supabase.from('observations').insert({ player_id: playerId, coach_profile_id: coachProfile.id, observation_text: obsText, category: obsCategory || null });
     if (error) { setObsError(error.message); setObsSaving(false); return; }
-
-    setObsText('');
-    setObsCategory('');
-    setShowObsForm(false);
-    setObsSaving(false);
+    setObsText(''); setObsCategory(''); setShowObsForm(false); setObsSaving(false);
     window.location.reload();
+  }
+
+  async function handleSelectDrillCategory(category: string) {
+    setSelectedDrillCategory(category);
+    setCategoryLoading(true);
+    setDrillSearch('');
+    setDrillResults([]);
+
+    const sport = player?.sport || 'Baseball';
+    const { data } = await supabase.from('master_drills').select('*').eq('category', category).or(`sport.eq.${sport},sport.eq.Both`).eq('is_active', true).order('sort_order');
+    setCategoryDrills(data || []);
+    setCategoryLoading(false);
   }
 
   async function handleSearchDrills(query: string) {
     setDrillSearch(query);
+    setSelectedDrillCategory('');
+    setCategoryDrills([]);
     if (query.length < 2) { setDrillResults([]); return; }
 
     const sport = player?.sport || 'Baseball';
-    const { data } = await supabase.from('master_drills').select('*').or(`sport.eq.${sport},sport.eq.Both`).ilike('drill_name', `%${query}%`).limit(10);
+    const { data } = await supabase.from('master_drills').select('*').or(`sport.eq.${sport},sport.eq.Both`).ilike('drill_name', `%${query}%`).limit(15);
     setDrillResults(data || []);
   }
 
   async function handleAssignDrill(drill: any) {
     if (!coachProfile) return;
-    setAssignSaving(true);
+    setAssigningDrillId(drill.id);
 
     const { error } = await supabase.from('drill_assignments').insert({
-      player_id: playerId,
-      coach_profile_id: coachProfile.id,
-      master_drill_id: drill.id,
-      coach_notes: assignNote || null,
-      status: 'assigned',
+      player_id: playerId, coach_profile_id: coachProfile.id, master_drill_id: drill.id,
+      coach_notes: assignNote || null, status: 'assigned',
     });
 
-    if (error) { setAssignSaving(false); return; }
-
-    setDrillSearch('');
-    setDrillResults([]);
-    setAssignNote('');
-    setShowDrillAssign(false);
-    setAssignSaving(false);
+    if (error) { setAssigningDrillId(null); return; }
+    setAssignNote(''); setShowAssignNote(null); setAssigningDrillId(null);
     window.location.reload();
   }
 
   async function handleGenerateAiPlan(e: React.FormEvent) {
     e.preventDefault();
     if (!coachProfile || !aiInput) return;
-    setAiError('');
-    setAiGenerating(true);
-
-    // For now, generate a placeholder AI response
-    // This will be replaced with actual Claude API call
-    const aiResponse = generatePlaceholderPlan(aiInput, player);
+    setAiError(''); setAiGenerating(true);
+    const aiResponse = `**Development Plan for ${player?.first_name || 'Player'}**\n\nBased on observation: "${aiInput}"\n\n**Week 1-2: Foundation**\n- Focus on identifying the root cause\n- 3 sets of targeted reps daily\n- Film review after each session\n\n**Week 3-4: Progression**\n- Increase intensity and game-speed reps\n- Coach feedback after each session\n- Track improvement markers\n\n*AI-generated plans with Claude API coming soon.*`;
 
     const { error } = await supabase.from('ai_plans').insert({
-      player_id: playerId,
-      coach_profile_id: coachProfile.id,
-      observation_id: null,
-      input_text: aiInput,
-      ai_response: aiResponse,
-      status: 'active',
+      player_id: playerId, coach_profile_id: coachProfile.id, observation_id: null,
+      input_text: aiInput, ai_response: aiResponse, status: 'active',
     });
 
     if (error) { setAiError(error.message); setAiGenerating(false); return; }
-
-    setAiInput('');
-    setShowAiForm(false);
-    setAiGenerating(false);
+    setAiInput(''); setShowAiForm(false); setAiGenerating(false);
     window.location.reload();
   }
 
-  function generatePlaceholderPlan(input: string, player: any) {
-    return `**Development Plan for ${player?.first_name || 'Player'}**\n\nBased on observation: "${input}"\n\n**Week 1-2: Foundation**\n- Focus on identifying the root cause\n- 3 sets of targeted reps daily\n- Film review after each session\n\n**Week 3-4: Progression**\n- Increase intensity and game-speed reps\n- Coach feedback after each session\n- Track improvement markers\n\n*This is a placeholder plan. AI-generated plans coming soon with Claude API integration.*`;
-  }
-
   function formatDate(dateStr: string) {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
   function formatTime(dateStr: string) {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
 
   if (loading) {
@@ -175,6 +154,8 @@ export default function PlayerDetailPage() {
   if (!player) {
     return (<div className="min-h-screen flex items-center justify-center"><div className="text-offwhite/40">Player not found.</div></div>);
   }
+
+  const drillsToShow = selectedDrillCategory ? categoryDrills : drillResults;
 
   return (
     <div className="min-h-screen">
@@ -217,7 +198,6 @@ export default function PlayerDetailPage() {
         {/* OVERVIEW TAB */}
         {activeTab === 'overview' && (
           <div className="space-y-4">
-            {/* Stats summary */}
             <div className="grid grid-cols-3 gap-3">
               <div className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center">
                 <div className="font-display text-2xl text-wheat">{observations.length}</div>
@@ -233,7 +213,6 @@ export default function PlayerDetailPage() {
               </div>
             </div>
 
-            {/* Recent Activity */}
             <div className="rounded-xl bg-navy-light border border-wheat/8 p-6">
               <h2 className="font-display text-lg text-wheat mb-4">Recent Activity</h2>
               {observations.length === 0 && assignments.length === 0 && aiPlans.length === 0 ? (
@@ -252,9 +231,7 @@ export default function PlayerDetailPage() {
                           {item.type === 'drill' && `Drill assigned: ${item.data.master_drills?.drill_name || item.data.coach_drills?.drill_name || 'Custom drill'}`}
                           {item.type === 'ai' && `AI Plan: ${item.data.input_text}`}
                         </div>
-                        <div className="text-[10px] text-offwhite/30 mt-1">
-                          {item.data.coach_profiles?.display_name || 'Coach'} · {formatTime(item.date)}
-                        </div>
+                        <div className="text-[10px] text-offwhite/30 mt-1">{item.data.coach_profiles?.display_name || 'Coach'} · {formatTime(item.date)}</div>
                       </div>
                     </div>
                   ))}
@@ -262,20 +239,16 @@ export default function PlayerDetailPage() {
               )}
             </div>
 
-            {/* Coach Quick Actions */}
             {isCoach && (
               <div className="grid grid-cols-3 gap-3">
                 <button onClick={() => { setActiveTab('observations'); setShowObsForm(true); }} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
-                  <div className="text-xl mb-1">👁️</div>
-                  <div className="text-[10px] text-offwhite/50">Add Observation</div>
+                  <div className="text-xl mb-1">👁️</div><div className="text-[10px] text-offwhite/50">Add Observation</div>
                 </button>
-                <button onClick={() => { setActiveTab('drills'); setShowDrillAssign(true); }} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
-                  <div className="text-xl mb-1">📋</div>
-                  <div className="text-[10px] text-offwhite/50">Assign Drill</div>
+                <button onClick={() => { setActiveTab('drills'); }} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
+                  <div className="text-xl mb-1">📋</div><div className="text-[10px] text-offwhite/50">Assign Drill</div>
                 </button>
                 <button onClick={() => { setActiveTab('ai-plans'); setShowAiForm(true); }} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
-                  <div className="text-xl mb-1">🧠</div>
-                  <div className="text-[10px] text-offwhite/50">AI Plan</div>
+                  <div className="text-xl mb-1">🧠</div><div className="text-[10px] text-offwhite/50">AI Plan</div>
                 </button>
               </div>
             )}
@@ -303,7 +276,6 @@ export default function PlayerDetailPage() {
                 </form>
               </div>
             )}
-
             {observations.length === 0 ? (
               <div className="text-center py-8 text-offwhite/30 text-sm">No observations yet.</div>
             ) : (
@@ -329,28 +301,58 @@ export default function PlayerDetailPage() {
             {isCoach && (
               <div className="rounded-xl bg-navy-light border border-wheat/10 p-6">
                 <h3 className="font-display text-lg text-wheat mb-3">Assign a Drill</h3>
-                <input type="text" value={drillSearch} onChange={(e) => handleSearchDrills(e.target.value)} className="w-full p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors mb-2" placeholder="Search drills by name..." />
-                {drillResults.length > 0 && (
-                  <div className="space-y-1 max-h-60 overflow-y-auto">
-                    {drillResults.map((drill) => (
-                      <div key={drill.id} className="p-3 bg-navy rounded-lg border border-wheat/8 hover:border-wheat/20 transition-all cursor-pointer" onClick={() => handleAssignDrill(drill)}>
+
+                {/* Search bar */}
+                <input type="text" value={drillSearch} onChange={(e) => handleSearchDrills(e.target.value)} className="w-full p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors mb-3" placeholder="Search by name or browse categories below..." />
+
+                {/* Category buttons */}
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {DRILL_CATEGORIES.map((cat) => (
+                    <button key={cat} onClick={() => handleSelectDrillCategory(cat)} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${selectedDrillCategory === cat ? 'bg-wheat text-navy' : 'bg-navy border border-wheat/10 text-offwhite/50 hover:border-wheat/25'}`}>{cat}</button>
+                  ))}
+                </div>
+
+                {/* Results */}
+                {categoryLoading && <div className="text-center py-4 text-offwhite/30 text-sm animate-pulse">Loading drills...</div>}
+
+                {drillsToShow.length > 0 && (
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {drillsToShow.map((drill) => (
+                      <div key={drill.id} className="p-3 bg-navy rounded-lg border border-wheat/8 hover:border-wheat/20 transition-all">
                         <div className="flex justify-between items-start">
-                          <div>
+                          <div className="flex-1 min-w-0 mr-3">
                             <div className="text-sm font-medium">{drill.drill_name}</div>
                             <div className="text-[10px] text-offwhite/40 mt-0.5">{drill.category} · {drill.difficulty} · {drill.sets_reps}</div>
+                            {drill.description && <p className="text-xs text-offwhite/30 mt-1 line-clamp-2">{drill.description}</p>}
                           </div>
-                          <span className="text-wheat text-xs">+ Assign</span>
+                          <div className="flex-shrink-0">
+                            {showAssignNote === drill.id ? (
+                              <div className="flex flex-col gap-1">
+                                <input type="text" value={assignNote} onChange={(e) => setAssignNote(e.target.value)} className="w-36 p-1.5 bg-navy-light border border-wheat/15 rounded text-xs text-offwhite focus:border-wheat outline-none" placeholder="Note (optional)" />
+                                <button onClick={() => handleAssignDrill(drill)} disabled={assigningDrillId === drill.id} className="px-3 py-1 bg-wheat text-navy text-xs font-display tracking-wider rounded hover:bg-wheat/90 transition-colors disabled:opacity-50">{assigningDrillId === drill.id ? '...' : 'Assign'}</button>
+                              </div>
+                            ) : (
+                              <button onClick={() => setShowAssignNote(drill.id)} className="px-3 py-1.5 bg-wheat/10 border border-wheat/20 text-wheat text-xs font-semibold rounded hover:bg-wheat/20 transition-colors">+ Assign</button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
-                {drillSearch.length >= 2 && drillResults.length === 0 && (
-                  <p className="text-xs text-offwhite/30 py-2">No drills found matching "{drillSearch}"</p>
+
+                {!categoryLoading && selectedDrillCategory && categoryDrills.length === 0 && (
+                  <p className="text-xs text-offwhite/30 py-2">No drills in this category for {player?.sport || 'Baseball'}.</p>
+                )}
+
+                {drillSearch.length >= 2 && drillResults.length === 0 && !selectedDrillCategory && (
+                  <p className="text-xs text-offwhite/30 py-2">No drills found matching &ldquo;{drillSearch}&rdquo;</p>
                 )}
               </div>
             )}
 
+            {/* Assigned drills list */}
+            <h3 className="font-display text-lg text-offwhite/60 mt-2">Assigned Drills</h3>
             {assignments.length === 0 ? (
               <div className="text-center py-8 text-offwhite/30 text-sm">No drills assigned yet.</div>
             ) : (
@@ -386,7 +388,7 @@ export default function PlayerDetailPage() {
             {isCoach && (
               <div className="rounded-xl bg-navy-light border border-wheat/10 p-6">
                 <h3 className="font-display text-lg text-wheat mb-1">Generate AI Development Plan</h3>
-                <p className="text-xs text-offwhite/40 mb-4">Describe what you're observing and CageTrack AI will create a targeted drill plan.</p>
+                <p className="text-xs text-offwhite/40 mb-4">Describe what you&apos;re observing and CageTrack AI will create a targeted drill plan.</p>
                 <form onSubmit={handleGenerateAiPlan} className="space-y-3">
                   <textarea value={aiInput} onChange={(e) => setAiInput(e.target.value)} rows={4} required className="w-full p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors resize-none" placeholder="Dropping back elbow on outside pitches. Gets jammed inside but decent bat path when he stays through the ball..." />
                   {aiError && <p className="text-red-400 text-xs">{aiError}</p>}
@@ -394,7 +396,6 @@ export default function PlayerDetailPage() {
                 </form>
               </div>
             )}
-
             {aiPlans.length === 0 ? (
               <div className="text-center py-8 text-offwhite/30 text-sm">No AI plans yet.</div>
             ) : (
