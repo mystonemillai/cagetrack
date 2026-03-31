@@ -226,6 +226,9 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
                 </Link>
               ))}
             </div>
+            </div>
+            )}
+
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <QuickAction icon="📋" label="Drills" href="/drills" />
               <QuickAction icon="🧢" label="Find Coaches" href="/coaches" />
