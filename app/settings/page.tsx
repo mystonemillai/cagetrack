@@ -41,8 +41,15 @@ export default function SettingsPage() {
       setProfile(p);
 
       const { data: pl } = await supabase.from('players').select('*').eq('owner_user_id', user.id);
-      setPlayers(pl || []);
-      if (pl && pl.length > 0) setSelectedPlayer(pl[0].id);
+      const { data: linked } = await supabase.from('parent_links').select('player_id').eq('parent_user_id', user.id).eq('status', 'active');
+      let allPlayers = pl || [];
+      if (linked && linked.length > 0) {
+        const linkedIds = linked.map((lp: any) => lp.player_id);
+        const { data: lp } = await supabase.from('players').select('*').in('id', linkedIds);
+        if (lp) allPlayers = [...allPlayers, ...lp];
+      }
+      setPlayers(allPlayers);
+      if (allPlayers.length > 0) setSelectedPlayer(allPlayers[0].id);
 
       setLoading(false);
     }
