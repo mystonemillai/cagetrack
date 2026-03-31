@@ -226,18 +226,18 @@ export default function PlayerDetailPage() {
         {activeTab === 'overview' && (
           <div className="space-y-4">
             <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center">
+              <button onClick={() => setActiveTab('observations')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
                 <div className="font-display text-2xl text-wheat">{observations.length}</div>
                 <div className="text-[10px] text-offwhite/40 uppercase tracking-wider mt-1">Observations</div>
-              </div>
-              <div className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center">
+              </button>
+              <button onClick={() => setActiveTab('drills')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
                 <div className="font-display text-2xl text-wheat">{assignments.length}</div>
                 <div className="text-[10px] text-offwhite/40 uppercase tracking-wider mt-1">Drills Assigned</div>
-              </div>
-              <div className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center">
+              </button>
+              <button onClick={() => setActiveTab('ai-plans')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
                 <div className="font-display text-2xl text-wheat">{aiPlans.length}</div>
                 <div className="text-[10px] text-offwhite/40 uppercase tracking-wider mt-1">AI Plans</div>
-              </div>
+              </button>
             </div>
 
             <div className="rounded-xl bg-navy-light border border-wheat/8 p-6">
