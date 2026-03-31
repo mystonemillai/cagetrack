@@ -35,6 +35,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
   const [playerCity, setPlayerCity] = useState('');
   const [playerState, setPlayerState] = useState('');
   const [playerZip, setPlayerZip] = useState('');
+  const [playerSport, setPlayerSport] = useState('Baseball');
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState('');
 
@@ -44,7 +45,15 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
   useEffect(() => {
     async function loadData() {
       const { data: players } = await supabase.from('players').select('*').eq('owner_user_id', userId);
-      setOwnedPlayers(players || []);
+
+      const { data: linkedPlayers } = await supabase.from('parent_links').select('player_id').eq('parent_user_id', userId).eq('status', 'active');
+      let allPlayers = players || [];
+      if (linkedPlayers && linkedPlayers.length > 0) {
+        const linkedIds = linkedPlayers.map((lp: any) => lp.player_id);
+        const { data: parentPlayers } = await supabase.from('players').select('*').in('id', linkedIds);
+        if (parentPlayers) allPlayers = [...allPlayers, ...parentPlayers];
+      }
+      setOwnedPlayers(allPlayers);
 
       if (isCoach) {
         const { data: cp } = await supabase.from('coach_profiles').select('*').eq('user_id', userId).single();
@@ -81,7 +90,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
     const { error } = await supabase.from('players').insert({
       owner_user_id: userId, first_name: fName, last_name: lName, age_group: ageGroup,
       positions: selectedPositions, current_team: currentTeam || null,
-      city: playerCity || null, state: playerState || null, zip_code: playerZip || null,
+      city: playerCity || null, state: playerState || null, zip_code: playerZip || null, sport: playerSport,
     });
 
     if (error) { setCreateError(error.message); setCreateLoading(false); return; }
@@ -94,10 +103,13 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
   }
 
   if (!dataLoaded) {
-    return (<div className="min-h-screen flex items-center justify-center"><div className="text-wheat font-display text-xl animate-pulse">Loading...</div></div>);
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-wheat font-display text-xl animate-pulse">Loading...</div>
+      </div>
+    );
   }
 
-  // ── PLAYER CREATION FORM ──
   if (showCreatePlayer) {
     return (
       <div className="min-h-screen">
@@ -107,7 +119,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
               <div className="w-7 h-7 rounded-md border-2 border-wheat flex items-center justify-center text-wheat font-display text-xs -rotate-3">CT</div>
               <span className="font-display text-lg tracking-wider">CAGETRACK</span>
             </Link>
-            <button onClick={handleSignOut} className="text-xs text-offwhite/40 hover:text-wheat transition-colors">Sign Out</button>
+            <button onClick={() => setShowCreatePlayer(false)} className="text-xs text-offwhite/40 hover:text-wheat transition-colors">← Back to Dashboard</button>
           </div>
         </nav>
         <main className="pt-20 pb-8 px-4 max-w-lg mx-auto">
@@ -115,9 +127,6 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
             <div className="w-14 h-14 rounded-xl bg-wheat/10 flex items-center justify-center mx-auto mb-4 text-2xl">⚾</div>
             <h1 className="font-display text-3xl sm:text-4xl mb-2">{isPlayer ? 'Complete Your Profile' : 'Add Your Player'}</h1>
             <p className="text-offwhite/40">{isPlayer ? 'Set up your development profile.' : "Create your player's development profile."}</p>
-            {isFamily && (
-              <Link href="/settings" className="inline-block mt-3 text-sm text-wheat hover:underline">Already have a player code? Link to existing player →</Link>
-            )}
           </div>
           <form onSubmit={handleCreatePlayer} className="space-y-5">
             <div className="grid grid-cols-2 gap-3">
@@ -143,6 +152,12 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
               </div>
             </div>
             <div>
+              <label className="block text-xs uppercase tracking-widest text-offwhite/40 mb-2">Sport</label>
+              <div className="flex gap-3">
+                {['Baseball', 'Softball'].map((s) => (<button key={s} type="button" onClick={() => setPlayerSport(s)} className={`flex-1 p-3 rounded-lg text-sm font-medium transition-all ${playerSport === s ? 'bg-wheat text-navy' : 'bg-navy-light border border-wheat/10 text-offwhite/50 hover:border-wheat/25'}`}>{s}</button>))}
+              </div>
+            </div>
+            <div>
               <label className="block text-xs uppercase tracking-widest text-offwhite/40 mb-2">Current Team <span className="text-offwhite/20">(optional)</span></label>
               <input type="text" value={currentTeam} onChange={(e) => setCurrentTeam(e.target.value)} className="w-full p-3 bg-navy-light border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors" placeholder="Team name" />
             </div>
@@ -165,7 +180,6 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
     );
   }
 
-  // ── MAIN DASHBOARD ──
   return (
     <div className="min-h-screen">
       <nav className="fixed top-0 w-full z-50 px-4 py-3 bg-navy/90 backdrop-blur-xl border-b border-wheat/8">
@@ -190,43 +204,40 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
         {!isCoach && (
           <>
             {!hasPlayers && (
-              <div className="space-y-3 mb-8">
-                <div className="rounded-xl bg-navy-light border border-wheat/10 p-8 text-center">
-                  <div className="w-14 h-14 rounded-xl bg-wheat/10 flex items-center justify-center mx-auto mb-4 text-2xl">⚾</div>
-                  <h2 className="font-display text-2xl mb-2">Get Started</h2>
-                  <p className="text-offwhite/40 mb-6 max-w-sm mx-auto">Add your player or link to an existing profile.</p>
-                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <button onClick={() => setShowCreatePlayer(true)} className="px-6 py-3 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors">Add a New Player</button>
-                    <Link href="/settings" className="px-6 py-3 bg-wheat/10 border border-wheat/20 text-wheat font-display text-sm tracking-wider rounded-lg hover:bg-wheat/20 transition-colors text-center">Link to Existing Player</Link>
-                  </div>
+              <div className="rounded-xl bg-navy-light border border-wheat/10 p-8 text-center mb-8">
+                <div className="w-14 h-14 rounded-xl bg-wheat/10 flex items-center justify-center mx-auto mb-4 text-2xl">⚾</div>
+                <h2 className="font-display text-2xl mb-2">Get Started</h2>
+                <p className="text-offwhite/40 mb-6 max-w-sm mx-auto">Add your player or link to an existing profile.</p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <button onClick={() => setShowCreatePlayer(true)} className="px-6 py-3 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors">Add a New Player</button>
+                  <Link href="/settings" className="px-6 py-3 bg-wheat/10 border border-wheat/20 text-wheat font-display text-sm tracking-wider rounded-lg hover:bg-wheat/20 transition-colors text-center">Link to Existing Player</Link>
                 </div>
               </div>
             )}
 
             {hasPlayers && (
-            <div className="space-y-4 mb-8">
-              {ownedPlayers.map((player) => (
-                <Link key={player.id} href={`/player/${player.id}`} className="block rounded-xl bg-navy-light border border-wheat/8 p-6 hover:border-wheat/20 transition-all cursor-pointer">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="font-display text-xl tracking-wide">{player.first_name} {player.last_name}</h3>
-                      <div className="flex items-center gap-3 mt-1">
-                        <span className="text-xs text-wheat bg-wheat/10 px-2 py-0.5 rounded">{player.age_group}</span>
-                        {player.current_team && <span className="text-xs text-offwhite/40">{player.current_team}</span>}
-                        {player.city && player.state && <span className="text-xs text-offwhite/30">{player.city}, {player.state}</span>}
-                      </div>
-                      {player.positions && player.positions.length > 0 && (
-                        <div className="flex gap-2 mt-2">
-                          {player.positions.map((pos: string) => (<span key={pos} className="text-xs text-offwhite/30 bg-offwhite/5 px-2 py-0.5 rounded">{pos}</span>))}
+              <div className="space-y-4 mb-8">
+                {ownedPlayers.map((player) => (
+                  <Link key={player.id} href={`/player/${player.id}`} className="block rounded-xl bg-navy-light border border-wheat/8 p-6 hover:border-wheat/20 transition-all cursor-pointer">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-display text-xl tracking-wide">{player.first_name} {player.last_name}</h3>
+                        <div className="flex items-center gap-3 mt-1">
+                          <span className="text-xs text-wheat bg-wheat/10 px-2 py-0.5 rounded">{player.age_group}</span>
+                          {player.current_team && <span className="text-xs text-offwhite/40">{player.current_team}</span>}
+                          {player.city && player.state && <span className="text-xs text-offwhite/30">{player.city}, {player.state}</span>}
                         </div>
-                      )}
+                        {player.positions && player.positions.length > 0 && (
+                          <div className="flex gap-2 mt-2">
+                            {player.positions.map((pos: string) => (<span key={pos} className="text-xs text-offwhite/30 bg-offwhite/5 px-2 py-0.5 rounded">{pos}</span>))}
+                          </div>
+                        )}
+                      </div>
+                      <span className="text-offwhite/20 text-xl">→</span>
                     </div>
-                    <span className="text-offwhite/20 text-xl">→</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-            </div>
+                  </Link>
+                ))}
+              </div>
             )}
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -235,7 +246,8 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
               <QuickAction icon="🧠" label="AI Plans" href="/dashboard" />
               <QuickAction icon="⚙️" label="Settings" href="/settings" />
             </div>
-            {isFamily && (
+
+            {(isFamily || isPlayer) && hasPlayers && (
               <button onClick={() => setShowCreatePlayer(true)} className="mt-6 w-full p-4 rounded-xl border border-dashed border-wheat/15 text-offwhite/30 hover:text-wheat hover:border-wheat/30 transition-all text-sm">+ Add Another Player</button>
             )}
           </>
@@ -342,9 +354,19 @@ function CoachInviteCodeEntry({ coachProfile }: { coachProfile: any }) {
 }
 
 function QuickAction({ icon, label, href }: { icon: string; label: string; href: string }) {
-  return (<Link href={href} className="rounded-xl bg-navy-light border border-wheat/6 p-4 text-center hover:border-wheat/15 transition-all"><div className="text-xl mb-1">{icon}</div><div className="text-xs text-offwhite/50 font-medium">{label}</div></Link>);
+  return (
+    <Link href={href} className="rounded-xl bg-navy-light border border-wheat/6 p-4 text-center hover:border-wheat/15 transition-all">
+      <div className="text-xl mb-1">{icon}</div>
+      <div className="text-xs text-offwhite/50 font-medium">{label}</div>
+    </Link>
+  );
 }
 
 function BottomNavItem({ icon, label, href, active }: { icon: string; label: string; href: string; active?: boolean }) {
-  return (<Link href={href} className="flex flex-col items-center gap-0.5 px-3 py-1"><span className="text-lg">{icon}</span><span className={`text-[10px] ${active ? 'text-wheat' : 'text-offwhite/30'}`}>{label}</span></Link>);
+  return (
+    <Link href={href} className="flex flex-col items-center gap-0.5 px-3 py-1">
+      <span className="text-lg">{icon}</span>
+      <span className={`text-[10px] ${active ? 'text-wheat' : 'text-offwhite/30'}`}>{label}</span>
+    </Link>
+  );
 }
