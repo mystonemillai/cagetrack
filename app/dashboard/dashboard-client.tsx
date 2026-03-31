@@ -240,9 +240,9 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
               </div>
             )}
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+<div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <QuickAction icon="🧢" label="Find Coaches" href="/coaches" />
-              <QuickAction icon="🔗" label="Invite Coach" href="/settings" />
+              <QuickAction icon="📖" label="Dev Blog" href="/blog" />
               <QuickAction icon="⚙️" label="Settings" href="/settings" />
             </div>
 
