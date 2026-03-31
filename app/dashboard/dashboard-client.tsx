@@ -35,6 +35,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
   const [playerCity, setPlayerCity] = useState('');
   const [playerState, setPlayerState] = useState('');
   const [playerZip, setPlayerZip] = useState('');
+  const [playerSport, setPlayerSport] = useState('Baseball');
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState('');
 
@@ -89,7 +90,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
     const { error } = await supabase.from('players').insert({
       owner_user_id: userId, first_name: fName, last_name: lName, age_group: ageGroup,
       positions: selectedPositions, current_team: currentTeam || null,
-      city: playerCity || null, state: playerState || null, zip_code: playerZip || null,
+      city: playerCity || null, state: playerState || null, zip_code: playerZip || null, sport: playerSport,
     });
 
     if (error) { setCreateError(error.message); setCreateLoading(false); return; }
@@ -150,6 +151,12 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
             <div>
               <label className="block text-xs uppercase tracking-widest text-offwhite/40 mb-2">Current Team <span className="text-offwhite/20">(optional)</span></label>
               <input type="text" value={currentTeam} onChange={(e) => setCurrentTeam(e.target.value)} className="w-full p-3 bg-navy-light border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors" placeholder="Team name" />
+            </div>
+            <div>
+              <label className="block text-xs uppercase tracking-widest text-offwhite/40 mb-2">Sport</label>
+              <div className="flex gap-3">
+                {['Baseball', 'Softball'].map((s) => (<button key={s} type="button" onClick={() => setPlayerSport(s)} className={`flex-1 p-3 rounded-lg text-sm font-medium transition-all ${playerSport === s ? 'bg-wheat text-navy' : 'bg-navy-light border border-wheat/10 text-offwhite/50 hover:border-wheat/25'}`}>{s}</button>))}
+              </div>
             </div>
             <div>
               <label className="block text-xs uppercase tracking-widest text-offwhite/40 mb-2">Location</label>
