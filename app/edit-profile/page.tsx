@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-browser';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import AvatarUpload from '@/components/AvatarUpload';
 
 const AGE_GROUPS = ['8U','9U','10U','11U','12U','13U','14U','15U','16U','17U','18U'];
 const POSITIONS = ['P','C','1B','2B','SS','3B','LF','CF','RF','DH','UTL'];
@@ -21,6 +22,7 @@ export default function EditProfilePage() {
 
   // Account fields
   const [name, setName] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
 
   // Player fields
   const [firstName, setFirstName] = useState('');
@@ -41,6 +43,7 @@ export default function EditProfilePage() {
       const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).single();
       setProfile(p);
       setName(p?.name || '');
+      setAvatarUrl(p?.avatar_url || '');
       setCity(p?.city || '');
       setState(p?.state || '');
       setZipCode(p?.zip_code || '');
@@ -93,6 +96,7 @@ export default function EditProfilePage() {
     // Update profile
     const { error: profileError } = await supabase.from('profiles').update({
       name: name,
+      avatar_url: avatarUrl || null,
       city: city || null,
       state: state || null,
       zip_code: zipCode || null,
@@ -144,6 +148,11 @@ export default function EditProfilePage() {
         <h1 className="font-display text-3xl sm:text-4xl mb-8">Edit Profile</h1>
 
         <form onSubmit={handleSave} className="space-y-5">
+          {/* Profile Photo */}
+          <div className="flex justify-center mb-2">
+            <AvatarUpload currentUrl={avatarUrl} onUpload={(url) => setAvatarUrl(url)} size={96} />
+          </div>
+
           {/* Account Name */}
           <div>
             <label className="block text-xs uppercase tracking-widest text-offwhite/40 mb-2">Your Name</label>
