@@ -26,6 +26,7 @@ export default function PlayerDetailPage() {
   const [showObsForm, setShowObsForm] = useState(false);
   const [obsText, setObsText] = useState('');
   const [obsCategory, setObsCategory] = useState('');
+  const [obsVideo, setObsVideo] = useState('');
   const [obsSaving, setObsSaving] = useState(false);
   const [obsError, setObsError] = useState('');
 
@@ -80,9 +81,9 @@ export default function PlayerDetailPage() {
     e.preventDefault();
     if (!coachProfile || !obsText) return;
     setObsError(''); setObsSaving(true);
-    const { error } = await supabase.from('observations').insert({ player_id: playerId, coach_profile_id: coachProfile.id, observation_text: obsText, category: obsCategory || null });
+    const { error } = await supabase.from('observations').insert({ player_id: playerId, coach_profile_id: coachProfile.id, observation_text: obsText, category: obsCategory || null, video_url: obsVideo || null });
     if (error) { setObsError(error.message); setObsSaving(false); return; }
-    setObsText(''); setObsCategory(''); setShowObsForm(false); setObsSaving(false);
+    setObsText(''); setObsCategory(''); setObsVideo(''); setShowObsForm(false); setObsSaving(false);
     window.location.reload();
   }
 
@@ -226,18 +227,18 @@ export default function PlayerDetailPage() {
         {activeTab === 'overview' && (
           <div className="space-y-4">
             <div className="grid grid-cols-3 gap-3">
-              <button onClick={() => setActiveTab('observations')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
+              <div className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center">
                 <div className="font-display text-2xl text-wheat">{observations.length}</div>
                 <div className="text-[10px] text-offwhite/40 uppercase tracking-wider mt-1">Observations</div>
-              </button>
-              <button onClick={() => setActiveTab('drills')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
+              </div>
+              <div className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center">
                 <div className="font-display text-2xl text-wheat">{assignments.length}</div>
                 <div className="text-[10px] text-offwhite/40 uppercase tracking-wider mt-1">Drills Assigned</div>
-              </button>
-              <button onClick={() => setActiveTab('ai-plans')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
+              </div>
+              <div className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center">
                 <div className="font-display text-2xl text-wheat">{aiPlans.length}</div>
                 <div className="text-[10px] text-offwhite/40 uppercase tracking-wider mt-1">AI Plans</div>
-              </button>
+              </div>
             </div>
 
             <div className="rounded-xl bg-navy-light border border-wheat/8 p-6">
@@ -298,6 +299,7 @@ export default function PlayerDetailPage() {
                     </div>
                   </div>
                   <textarea value={obsText} onChange={(e) => setObsText(e.target.value)} rows={4} required className="w-full p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors resize-none" placeholder="What are you seeing? Be specific — dropping back elbow, stepping in the bucket, good bat path but needs to stay through the ball..." />
+                  <input type="url" value={obsVideo} onChange={(e) => setObsVideo(e.target.value)} className="w-full p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors" placeholder="Video link (optional) — YouTube, Vimeo, etc." />
                   {obsError && <p className="text-red-400 text-xs">{obsError}</p>}
                   <button type="submit" disabled={obsSaving || !obsText} className="px-6 py-2 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors disabled:opacity-50">{obsSaving ? 'Saving...' : 'Save Observation'}</button>
                 </form>
@@ -316,6 +318,9 @@ export default function PlayerDetailPage() {
                     <span className="text-[10px] text-offwhite/25">{formatDate(obs.created_at)}</span>
                   </div>
                   <p className="text-sm text-offwhite/70 leading-relaxed">{obs.observation_text}</p>
+                  {obs.video_url && (
+                    <a href={obs.video_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 mt-2 text-xs text-wheat hover:underline">▶ Watch Video</a>
+                  )}
                 </div>
               ))
             )}
