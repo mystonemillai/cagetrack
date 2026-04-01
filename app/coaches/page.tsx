@@ -35,7 +35,7 @@ export default function CoachDirectoryPage() {
       // Load all searchable coaches
       const { data: coachData } = await supabase
         .from('coach_profiles')
-        .select('*, profiles(name, email)')
+        .select('*, profiles(name, email, avatar_url)')
         .eq('is_searchable', true)
         .eq('is_active', true);
 
@@ -134,8 +134,13 @@ export default function CoachDirectoryPage() {
           <div className="space-y-3">
             {filteredCoaches.map((coach) => (
               <div key={coach.id} className="rounded-xl bg-navy-light border border-wheat/8 p-5 hover:border-wheat/20 transition-all">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
+                <div className="flex items-start gap-4">
+                  {coach.profiles?.avatar_url ? (
+                    <img src={coach.profiles.avatar_url} alt={coach.display_name} className="w-14 h-14 rounded-full object-cover border border-wheat/20 flex-shrink-0" />
+                  ) : (
+                    <div className="w-14 h-14 rounded-full bg-wheat/10 flex items-center justify-center flex-shrink-0 text-xl">🧢</div>
+                  )}
+                  <div className="flex-1 min-w-0">
                     <h3 className="font-display text-lg tracking-wide text-wheat">{coach.display_name}</h3>
                     <div className="flex flex-wrap gap-2 mt-1.5">
                       {coach.specialty && (
