@@ -190,6 +190,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
           </Link>
           <div className="flex items-center gap-4">
             <span className="text-xs text-offwhite/40 hidden sm:block">{profile?.name}</span>
+            <Link href="/edit-profile" className="text-xs text-offwhite/40 hover:text-wheat transition-colors">Edit Profile</Link>
             <button onClick={handleSignOut} className="text-xs text-offwhite/40 hover:text-wheat transition-colors">Sign Out</button>
           </div>
         </div>
