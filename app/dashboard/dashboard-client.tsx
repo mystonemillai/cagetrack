@@ -189,7 +189,14 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
             <span className="font-display text-lg tracking-wider">CAGETRACK</span>
           </Link>
           <div className="flex items-center gap-4">
-            <span className="text-xs text-offwhite/40 hidden sm:block">{profile?.name}</span>
+            <div className="flex items-center gap-2 hidden sm:flex">
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover border border-wheat/20" />
+              ) : (
+                <div className="w-6 h-6 rounded-full bg-wheat/10 flex items-center justify-center text-[10px]">👤</div>
+              )}
+              <span className="text-xs text-offwhite/40">{profile?.name}</span>
+            </div>
             <Link href="/edit-profile" className="text-xs text-offwhite/40 hover:text-wheat transition-colors">Edit Profile</Link>
             <button onClick={handleSignOut} className="text-xs text-offwhite/40 hover:text-wheat transition-colors">Sign Out</button>
           </div>
