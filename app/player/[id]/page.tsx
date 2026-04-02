@@ -23,19 +23,16 @@ export default function PlayerDetailPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
 
-  const [showObsForm, setShowObsForm] = useState(false);
   const [obsText, setObsText] = useState('');
   const [obsCategory, setObsCategory] = useState('');
   const [obsVideo, setObsVideo] = useState('');
   const [obsSaving, setObsSaving] = useState(false);
   const [obsError, setObsError] = useState('');
 
-  const [showAiForm, setShowAiForm] = useState(false);
   const [aiInput, setAiInput] = useState('');
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiError, setAiError] = useState('');
 
-  // Drill assignment state
   const [drillSearch, setDrillSearch] = useState('');
   const [drillResults, setDrillResults] = useState<any[]>([]);
   const [selectedDrillCategory, setSelectedDrillCategory] = useState('');
@@ -44,6 +41,8 @@ export default function PlayerDetailPage() {
   const [assigningDrillId, setAssigningDrillId] = useState<string | null>(null);
   const [assignNote, setAssignNote] = useState('');
   const [showAssignNote, setShowAssignNote] = useState<string | null>(null);
+  const [drillSource, setDrillSource] = useState('master');
+  const [myDrills, setMyDrills] = useState<any[]>([]);
 
   useEffect(() => {
     async function loadData() {
@@ -59,6 +58,10 @@ export default function PlayerDetailPage() {
       if (p?.role === 'coach') {
         const { data: cp } = await supabase.from('coach_profiles').select('*').eq('user_id', user.id).single();
         setCoachProfile(cp);
+        if (cp) {
+          const { data: md } = await supabase.from('coach_drills').select('*').eq('coach_profile_id', cp.id).eq('is_active', true);
+          setMyDrills(md || []);
+        }
       }
 
       const { data: obs } = await supabase.from('observations').select('*, coach_profiles(display_name)').eq('player_id', playerId).order('created_at', { ascending: false });
@@ -83,8 +86,34 @@ export default function PlayerDetailPage() {
     setObsError(''); setObsSaving(true);
     const { error } = await supabase.from('observations').insert({ player_id: playerId, coach_profile_id: coachProfile.id, observation_text: obsText, category: obsCategory || null, video_url: obsVideo || null });
     if (error) { setObsError(error.message); setObsSaving(false); return; }
-    setObsText(''); setObsCategory(''); setObsVideo(''); setShowObsForm(false); setObsSaving(false);
+    setObsText(''); setObsCategory(''); setObsVideo(''); setObsSaving(false);
     window.location.reload();
+  }
+
+  async function loadMyDrillsForAssign() {
+    setCategoryDrills(myDrills);
+    setSelectedDrillCategory('');
+    setDrillSearch('');
+    setDrillResults([]);
+  }
+
+  async function handleSearchDrills(query: string) {
+    setDrillSearch(query);
+    setSelectedDrillCategory('');
+    if (query.length < 2) {
+      setDrillResults([]);
+      if (drillSource === 'mine') setCategoryDrills(myDrills);
+      return;
+    }
+
+    if (drillSource === 'master') {
+      const sport = player?.sport || 'Baseball';
+      const { data } = await supabase.from('master_drills').select('*').or(`sport.eq.${sport},sport.eq.Both`).ilike('drill_name', `%${query}%`).limit(15);
+      setDrillResults(data || []);
+    } else {
+      const filtered = myDrills.filter(d => d.drill_name.toLowerCase().includes(query.toLowerCase()));
+      setCategoryDrills(filtered);
+    }
   }
 
   async function handleSelectDrillCategory(category: string) {
@@ -93,29 +122,26 @@ export default function PlayerDetailPage() {
     setDrillSearch('');
     setDrillResults([]);
 
-    const sport = player?.sport || 'Baseball';
-    const { data } = await supabase.from('master_drills').select('*').eq('category', category).or(`sport.eq.${sport},sport.eq.Both`).eq('is_active', true).order('sort_order');
-    setCategoryDrills(data || []);
+    if (drillSource === 'master') {
+      const sport = player?.sport || 'Baseball';
+      const { data } = await supabase.from('master_drills').select('*').eq('category', category).or(`sport.eq.${sport},sport.eq.Both`).eq('is_active', true).order('sort_order');
+      setCategoryDrills(data || []);
+    } else {
+      const filtered = myDrills.filter(d => d.category === category);
+      setCategoryDrills(filtered);
+    }
     setCategoryLoading(false);
-  }
-
-  async function handleSearchDrills(query: string) {
-    setDrillSearch(query);
-    setSelectedDrillCategory('');
-    setCategoryDrills([]);
-    if (query.length < 2) { setDrillResults([]); return; }
-
-    const sport = player?.sport || 'Baseball';
-    const { data } = await supabase.from('master_drills').select('*').or(`sport.eq.${sport},sport.eq.Both`).ilike('drill_name', `%${query}%`).limit(15);
-    setDrillResults(data || []);
   }
 
   async function handleAssignDrill(drill: any) {
     if (!coachProfile) return;
     setAssigningDrillId(drill.id);
 
+    const isCoachDrill = drillSource === 'mine';
     const { error } = await supabase.from('drill_assignments').insert({
-      player_id: playerId, coach_profile_id: coachProfile.id, master_drill_id: drill.id,
+      player_id: playerId, coach_profile_id: coachProfile.id,
+      master_drill_id: isCoachDrill ? null : drill.id,
+      coach_drill_id: isCoachDrill ? drill.id : null,
       coach_notes: assignNote || null, status: 'assigned',
     });
 
@@ -131,7 +157,6 @@ export default function PlayerDetailPage() {
 
     try {
       const recentObs = observations.slice(0, 5).map((o: any) => o.observation_text);
-
       const response = await fetch('/api/ai/generate-plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -146,12 +171,7 @@ export default function PlayerDetailPage() {
       });
 
       const data = await response.json();
-
-      if (!response.ok) {
-        setAiError(data.error || 'Failed to generate plan. Please try again.');
-        setAiGenerating(false);
-        return;
-      }
+      if (!response.ok) { setAiError(data.error || 'Failed to generate plan.'); setAiGenerating(false); return; }
 
       const { error } = await supabase.from('ai_plans').insert({
         player_id: playerId, coach_profile_id: coachProfile.id, observation_id: null,
@@ -159,7 +179,7 @@ export default function PlayerDetailPage() {
       });
 
       if (error) { setAiError(error.message); setAiGenerating(false); return; }
-      setAiInput(''); setShowAiForm(false); setAiGenerating(false);
+      setAiInput(''); setAiGenerating(false);
       window.location.reload();
     } catch (err: any) {
       setAiError(err.message || 'Something went wrong');
@@ -183,7 +203,7 @@ export default function PlayerDetailPage() {
     return (<div className="min-h-screen flex items-center justify-center"><div className="text-offwhite/40">Player not found.</div></div>);
   }
 
-  const drillsToShow = selectedDrillCategory ? categoryDrills : drillResults;
+  const drillsToShow = selectedDrillCategory ? categoryDrills : (drillSource === 'master' ? drillResults : categoryDrills);
 
   return (
     <div className="min-h-screen">
@@ -198,7 +218,6 @@ export default function PlayerDetailPage() {
       </nav>
 
       <main className="pt-20 pb-24 px-4 max-w-3xl mx-auto">
-        {/* Player Header */}
         <div className="mb-6">
           <h1 className="font-display text-3xl sm:text-4xl">{player.first_name} {player.last_name}</h1>
           <div className="flex items-center gap-3 mt-2">
@@ -214,7 +233,6 @@ export default function PlayerDetailPage() {
           )}
         </div>
 
-        {/* Tabs */}
         <div className="flex gap-1 mb-6 bg-navy-light rounded-lg p-1 overflow-x-auto">
           {['overview', 'observations', 'drills', 'ai-plans'].map((tab) => (
             <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 rounded-md text-xs font-medium whitespace-nowrap transition-all ${activeTab === tab ? 'bg-wheat text-navy' : 'text-offwhite/40 hover:text-offwhite/60'}`}>
@@ -223,7 +241,6 @@ export default function PlayerDetailPage() {
           ))}
         </div>
 
-        {/* OVERVIEW TAB */}
         {activeTab === 'overview' && (
           <div className="space-y-4">
             <div className="grid grid-cols-3 gap-3">
@@ -269,13 +286,13 @@ export default function PlayerDetailPage() {
 
             {isCoach && (
               <div className="grid grid-cols-3 gap-3">
-                <button onClick={() => { setActiveTab('observations'); setShowObsForm(true); }} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
+                <button onClick={() => setActiveTab('observations')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
                   <div className="text-xl mb-1">👁️</div><div className="text-[10px] text-offwhite/50">Add Observation</div>
                 </button>
-                <button onClick={() => { setActiveTab('drills'); }} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
+                <button onClick={() => setActiveTab('drills')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
                   <div className="text-xl mb-1">📋</div><div className="text-[10px] text-offwhite/50">Assign Drill</div>
                 </button>
-                <button onClick={() => { setActiveTab('ai-plans'); setShowAiForm(true); }} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
+                <button onClick={() => setActiveTab('ai-plans')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
                   <div className="text-xl mb-1">🧠</div><div className="text-[10px] text-offwhite/50">AI Plan</div>
                 </button>
               </div>
@@ -283,7 +300,6 @@ export default function PlayerDetailPage() {
           </div>
         )}
 
-        {/* OBSERVATIONS TAB */}
         {activeTab === 'observations' && (
           <div className="space-y-4">
             {isCoach && (
@@ -327,30 +343,34 @@ export default function PlayerDetailPage() {
           </div>
         )}
 
-        {/* DRILLS TAB */}
         {activeTab === 'drills' && (
           <div className="space-y-4">
             {isCoach && (
               <div className="rounded-xl bg-navy-light border border-wheat/10 p-6">
                 <h3 className="font-display text-lg text-wheat mb-3">Assign a Drill</h3>
 
-                {/* Library toggle */}
                 <div className="flex gap-2 mb-3">
                   <button onClick={() => { setDrillSource('master'); setSelectedDrillCategory(''); setCategoryDrills([]); setDrillSearch(''); setDrillResults([]); }} className={`px-4 py-1.5 rounded-md text-xs font-medium transition-all ${drillSource === 'master' ? 'bg-wheat text-navy' : 'bg-navy border border-wheat/10 text-offwhite/50'}`}>Master Library</button>
-                  <button onClick={() => { setDrillSource('mine'); setSelectedDrillCategory(''); setCategoryDrills([]); setDrillSearch(''); setDrillResults([]); loadMyDrills(); }} className={`px-4 py-1.5 rounded-md text-xs font-medium transition-all ${drillSource === 'mine' ? 'bg-wheat text-navy' : 'bg-navy border border-wheat/10 text-offwhite/50'}`}>My Drills</button>
+                  <button onClick={() => { setDrillSource('mine'); setSelectedDrillCategory(''); setDrillSearch(''); setDrillResults([]); loadMyDrillsForAssign(); }} className={`px-4 py-1.5 rounded-md text-xs font-medium transition-all ${drillSource === 'mine' ? 'bg-wheat text-navy' : 'bg-navy border border-wheat/10 text-offwhite/50'}`}>My Drills ({myDrills.length})</button>
                 </div>
 
-                {/* Search bar */}
                 <input type="text" value={drillSearch} onChange={(e) => handleSearchDrills(e.target.value)} className="w-full p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors mb-3" placeholder={drillSource === 'master' ? 'Search by name or browse categories below...' : 'Search your custom drills...'} />
 
-                {/* Category buttons */}
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {DRILL_CATEGORIES.map((cat) => (
-                    <button key={cat} onClick={() => handleSelectDrillCategory(cat)} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${selectedDrillCategory === cat ? 'bg-wheat text-navy' : 'bg-navy border border-wheat/10 text-offwhite/50 hover:border-wheat/25'}`}>{cat}</button>
-                  ))}
-                </div>
+                {drillSource === 'master' && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {DRILL_CATEGORIES.map((cat) => (
+                      <button key={cat} onClick={() => handleSelectDrillCategory(cat)} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${selectedDrillCategory === cat ? 'bg-wheat text-navy' : 'bg-navy border border-wheat/10 text-offwhite/50 hover:border-wheat/25'}`}>{cat}</button>
+                    ))}
+                  </div>
+                )}
 
-                {/* Results */}
+                {drillSource === 'mine' && myDrills.length === 0 && (
+                  <div className="text-center py-4">
+                    <p className="text-xs text-offwhite/30 mb-2">You haven&apos;t created any custom drills yet.</p>
+                    <Link href="/my-drills" className="text-xs text-wheat hover:underline">Create your first drill →</Link>
+                  </div>
+                )}
+
                 {categoryLoading && <div className="text-center py-4 text-offwhite/30 text-sm animate-pulse">Loading drills...</div>}
 
                 {drillsToShow.length > 0 && (
@@ -379,17 +399,16 @@ export default function PlayerDetailPage() {
                   </div>
                 )}
 
-                {!categoryLoading && selectedDrillCategory && categoryDrills.length === 0 && (
+                {!categoryLoading && drillSource === 'master' && selectedDrillCategory && categoryDrills.length === 0 && (
                   <p className="text-xs text-offwhite/30 py-2">No drills in this category for {player?.sport || 'Baseball'}.</p>
                 )}
 
-                {drillSearch.length >= 2 && drillResults.length === 0 && !selectedDrillCategory && (
+                {drillSearch.length >= 2 && drillResults.length === 0 && drillSource === 'master' && !selectedDrillCategory && (
                   <p className="text-xs text-offwhite/30 py-2">No drills found matching &ldquo;{drillSearch}&rdquo;</p>
                 )}
               </div>
             )}
 
-            {/* Assigned drills list */}
             <h3 className="font-display text-lg text-offwhite/60 mt-2">Assigned Drills</h3>
             {assignments.length === 0 ? (
               <div className="text-center py-8 text-offwhite/30 text-sm">No drills assigned yet.</div>
@@ -404,6 +423,7 @@ export default function PlayerDetailPage() {
                         <div className="flex gap-2 mt-1">
                           {drill?.category && <span className="text-[10px] text-wheat bg-wheat/10 px-2 py-0.5 rounded">{drill.category}</span>}
                           {drill?.difficulty && <span className="text-[10px] text-offwhite/30 bg-offwhite/5 px-2 py-0.5 rounded">{drill.difficulty}</span>}
+                          {assign.coach_drill_id && <span className="text-[10px] text-offwhite/30 bg-offwhite/5 px-2 py-0.5 rounded">Custom</span>}
                           <span className={`text-[10px] px-2 py-0.5 rounded ${assign.status === 'completed' ? 'text-green-400 bg-green-400/10' : assign.status === 'in_progress' ? 'text-yellow-400 bg-yellow-400/10' : 'text-offwhite/30 bg-offwhite/5'}`}>{assign.status}</span>
                         </div>
                       </div>
@@ -420,7 +440,6 @@ export default function PlayerDetailPage() {
           </div>
         )}
 
-        {/* AI PLANS TAB */}
         {activeTab === 'ai-plans' && (
           <div className="space-y-4">
             {isCoach && (
