@@ -43,6 +43,9 @@ export default function PlayerDetailPage() {
   const [showAssignNote, setShowAssignNote] = useState<string | null>(null);
   const [drillSource, setDrillSource] = useState('master');
   const [myDrills, setMyDrills] = useState<any[]>([]);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [msgText, setMsgText] = useState('');
+  const [msgSending, setMsgSending] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -72,6 +75,9 @@ export default function PlayerDetailPage() {
 
       const { data: plans } = await supabase.from('ai_plans').select('*, coach_profiles(display_name)').eq('player_id', playerId).order('created_at', { ascending: false });
       setAiPlans(plans || []);
+
+      const { data: msgs } = await supabase.from('messages').select('*').eq('player_id', playerId).order('created_at', { ascending: true });
+      setMessages(msgs || []);
 
       setLoading(false);
     }
@@ -187,6 +193,19 @@ export default function PlayerDetailPage() {
     }
   }
 
+  async function handleSendMessage(e: React.FormEvent) {
+    e.preventDefault();
+    if (!msgText.trim() || !profile) return;
+    setMsgSending(true);
+    const senderName = profile.role === 'coach' && coachProfile ? coachProfile.display_name : profile.name;
+    const { error } = await supabase.from('messages').insert({
+      player_id: playerId, sender_user_id: profile.id,
+      sender_name: senderName, message_text: msgText.trim(),
+    });
+    if (!error) { setMsgText(''); window.location.reload(); }
+    setMsgSending(false);
+  }
+
   function formatDate(dateStr: string) {
     return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
@@ -234,9 +253,9 @@ export default function PlayerDetailPage() {
         </div>
 
         <div className="flex gap-1 mb-6 bg-navy-light rounded-lg p-1 overflow-x-auto">
-          {['overview', 'observations', 'drills', 'ai-plans'].map((tab) => (
+          {['overview', 'observations', 'drills', 'ai-plans', 'messages'].map((tab) => (
             <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 rounded-md text-xs font-medium whitespace-nowrap transition-all ${activeTab === tab ? 'bg-wheat text-navy' : 'text-offwhite/40 hover:text-offwhite/60'}`}>
-              {tab === 'overview' ? 'Overview' : tab === 'observations' ? 'Observations' : tab === 'drills' ? 'Drills' : 'AI Plans'}
+              {tab === 'overview' ? 'Overview' : tab === 'observations' ? 'Observations' : tab === 'drills' ? 'Drills' : tab === 'ai-plans' ? 'AI Plans' : 'Messages'}
             </button>
           ))}
         </div>
@@ -472,6 +491,36 @@ export default function PlayerDetailPage() {
             )}
           </div>
         )}
+        {activeTab === 'messages' && (
+          <div className="space-y-4">
+            <div className="rounded-xl bg-navy-light border border-wheat/8 p-5">
+              <h3 className="font-display text-lg text-wheat mb-4">Messages</h3>
+              <p className="text-xs text-offwhite/30 mb-4">Private messages between coaches and family connected to {player.first_name}&apos;s profile.</p>
+
+              {messages.length === 0 ? (
+                <p className="text-sm text-offwhite/30 text-center py-6">No messages yet. Start the conversation.</p>
+              ) : (
+                <div className="space-y-3 max-h-96 overflow-y-auto mb-4">
+                  {messages.map((msg) => (
+                    <div key={msg.id} className={`p-3 rounded-lg ${msg.sender_user_id === profile?.id ? 'bg-wheat/10 border border-wheat/15 ml-8' : 'bg-navy border border-wheat/8 mr-8'}`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-semibold text-wheat">{msg.sender_name || 'Unknown'}</span>
+                        <span className="text-[10px] text-offwhite/25">{formatDate(msg.created_at)}</span>
+                      </div>
+                      <p className="text-sm text-offwhite/70">{msg.message_text}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <form onSubmit={handleSendMessage} className="flex gap-2">
+                <input type="text" value={msgText} onChange={(e) => setMsgText(e.target.value)} className="flex-1 p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors" placeholder="Type a message..." />
+                <button type="submit" disabled={msgSending || !msgText.trim()} className="px-5 py-3 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors disabled:opacity-50">{msgSending ? '...' : 'Send'}</button>
+              </form>
+            </div>
+          </div>
+        )}
+
       </main>
 
       <nav className="fixed bottom-0 w-full z-50 bg-navy/95 backdrop-blur-xl border-t border-wheat/8 sm:hidden">
