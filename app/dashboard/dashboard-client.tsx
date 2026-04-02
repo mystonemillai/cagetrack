@@ -24,6 +24,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
   const [ownedPlayers, setOwnedPlayers] = useState<any[]>([]);
   const [coachProfile, setCoachProfile] = useState<any>(null);
   const [connectedPlayers, setConnectedPlayers] = useState<any[]>([]);
+  const [hasSubscription, setHasSubscription] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
 
   const [showCreatePlayer, setShowCreatePlayer] = useState(false);
@@ -54,6 +55,11 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
         if (parentPlayers) allPlayers = [...allPlayers, ...parentPlayers];
       }
       setOwnedPlayers(allPlayers);
+
+      if (!isCoach) {
+        const { data: sub } = await supabase.from('subscriptions').select('id').eq('billing_user_id', userId).eq('status', 'active').single();
+        setHasSubscription(!!sub);
+      }
 
       if (isCoach) {
         const { data: cp } = await supabase.from('coach_profiles').select('*').eq('user_id', userId).single();
@@ -103,11 +109,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
   }
 
   if (!dataLoaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-wheat font-display text-xl animate-pulse">Loading...</div>
-      </div>
-    );
+    return (<div className="min-h-screen flex items-center justify-center"><div className="text-wheat font-display text-xl animate-pulse">Loading...</div></div>);
   }
 
   if (showCreatePlayer) {
@@ -209,6 +211,19 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
           <p className="text-offwhite/40 mt-1">{isCoach ? 'Your coaching dashboard' : isPlayer ? 'Your development dashboard' : "Your player's development"}</p>
         </div>
 
+        {/* Upgrade banner - only for non-coaches without subscription */}
+        {!isCoach && !hasSubscription && (
+          <Link href="/settings" className="block mb-6 p-4 rounded-xl bg-wheat/5 border border-wheat/15 hover:border-wheat/30 transition-all">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-semibold text-wheat">Upgrade to unlock all features</div>
+                <div className="text-xs text-offwhite/40 mt-0.5">Starting at $15/mo — AI plans, full drill library, and more</div>
+              </div>
+              <span className="text-wheat text-xs font-display tracking-wider">UPGRADE →</span>
+            </div>
+          </Link>
+        )}
+
         {!isCoach && (
           <>
             {!hasPlayers && (
@@ -248,7 +263,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
               </div>
             )}
 
-<div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <QuickAction icon="🧢" label="Find Coaches" href="/coaches" />
               <QuickAction icon="📖" label="Dev Blog" href="/blog" />
               <QuickAction icon="⚙️" label="Settings" href="/settings" />
@@ -277,7 +292,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
                     <h3 className="font-display text-lg text-wheat">{coachProfile.display_name}</h3>
                     <div className="flex gap-2 mt-1">
                       {coachProfile.specialty && <span className="text-xs text-wheat bg-wheat/10 px-2 py-0.5 rounded">{coachProfile.specialty}</span>}
-                      {coachProfile.coach_type && <span className="text-xs text-offwhite/30 bg-offwhite/5 px-2 py-0.5 rounded capitalize">{coachProfile.coach_type}</span>}
+                      {coachProfile.coach_type && <span className="text-xs text-offwhite/30 bg-offwhite/5 px-2 py-0.5 rounded capitalize">{coachProfile.coach_type.replace(/_/g, ' ')}</span>}
                       {coachProfile.city && coachProfile.state && <span className="text-xs text-offwhite/30">{coachProfile.city}, {coachProfile.state}</span>}
                     </div>
                   </div>
@@ -307,7 +322,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
               <QuickAction icon="📋" label="Drill Library" href="/drills" />
               <QuickAction icon="✏️" label="My Drills" href="/coach-setup" />
-              <QuickAction icon="🧠" label="AI Plans" href="/dashboard" />
+              <QuickAction icon="📖" label="Dev Blog" href="/blog" />
               <QuickAction icon="⚙️" label="Settings" href="/settings" />
             </div>
           </>
