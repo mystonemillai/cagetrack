@@ -334,8 +334,14 @@ export default function PlayerDetailPage() {
               <div className="rounded-xl bg-navy-light border border-wheat/10 p-6">
                 <h3 className="font-display text-lg text-wheat mb-3">Assign a Drill</h3>
 
+                {/* Library toggle */}
+                <div className="flex gap-2 mb-3">
+                  <button onClick={() => { setDrillSource('master'); setSelectedDrillCategory(''); setCategoryDrills([]); setDrillSearch(''); setDrillResults([]); }} className={`px-4 py-1.5 rounded-md text-xs font-medium transition-all ${drillSource === 'master' ? 'bg-wheat text-navy' : 'bg-navy border border-wheat/10 text-offwhite/50'}`}>Master Library</button>
+                  <button onClick={() => { setDrillSource('mine'); setSelectedDrillCategory(''); setCategoryDrills([]); setDrillSearch(''); setDrillResults([]); loadMyDrills(); }} className={`px-4 py-1.5 rounded-md text-xs font-medium transition-all ${drillSource === 'mine' ? 'bg-wheat text-navy' : 'bg-navy border border-wheat/10 text-offwhite/50'}`}>My Drills</button>
+                </div>
+
                 {/* Search bar */}
-                <input type="text" value={drillSearch} onChange={(e) => handleSearchDrills(e.target.value)} className="w-full p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors mb-3" placeholder="Search by name or browse categories below..." />
+                <input type="text" value={drillSearch} onChange={(e) => handleSearchDrills(e.target.value)} className="w-full p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors mb-3" placeholder={drillSource === 'master' ? 'Search by name or browse categories below...' : 'Search your custom drills...'} />
 
                 {/* Category buttons */}
                 <div className="flex flex-wrap gap-2 mb-4">
