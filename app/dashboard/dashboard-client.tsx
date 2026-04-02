@@ -321,7 +321,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
             <CoachInviteCodeEntry coachProfile={coachProfile} />
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
               <QuickAction icon="📋" label="Drill Library" href="/drills" />
-              <QuickAction icon="✏️" label="My Drills" href="/coach-setup" />
+              <QuickAction icon="✏️" label="My Drills" href="/my-drills" />
               <QuickAction icon="📖" label="Dev Blog" href="/blog" />
               <QuickAction icon="⚙️" label="Settings" href="/settings" />
             </div>
