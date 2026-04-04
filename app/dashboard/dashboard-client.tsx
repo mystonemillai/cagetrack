@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-browser';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-f
+
 interface DashboardClientProps {
   profile: any;
   userId: string;
@@ -296,12 +296,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
                       {coachProfile.city && coachProfile.state && <span className="text-xs text-offwhite/30">{coachProfile.city}, {coachProfile.state}</span>}
                     </div>
                   </div>
-                  <div className="flex gap-3">
-                    <button onClick={() => { navigator.clipboard.writeText(`https://cagetrack.com/coach/${coachProfile.id}`); alert('Profile link copied!'); }} className="text-xs text-wheat hover:underline">Share Profile</button>
-                    <div className="flex gap-3">
-                    <button onClick={() => { navigator.clipboard.writeText(`https://cagetrack.com/coach/${coachProfile.id}`); alert('Profile link copied!'); }} className="text-xs text-wheat hover:underline">Share Profile</button>
-                    <Link href="/coach-setup" className="text-xs text-offwhite/30 hover:text-wheat transition-colors">Edit</Link>
-                  </div>
+                  <Link href="/coach-setup" className="text-xs text-offwhite/30 hover:text-wheat transition-colors">Edit</Link>
                 </div>
               </div>
             )}
@@ -326,7 +321,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
             <CoachInviteCodeEntry coachProfile={coachProfile} />
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
               <QuickAction icon="📋" label="Drill Library" href="/drills" />
-              <QuickAction icon="✏️" label="My Drills" href="/my-drills" />
+              <QuickAction icon="✏️" label="My Drills" href="/coach-setup" />
               <QuickAction icon="📖" label="Dev Blog" href="/blog" />
               <QuickAction icon="⚙️" label="Settings" href="/settings" />
             </div>
