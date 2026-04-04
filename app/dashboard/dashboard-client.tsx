@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-browser';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-
+f
 interface DashboardClientProps {
   profile: any;
   userId: string;
@@ -296,7 +296,9 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
                       {coachProfile.city && coachProfile.state && <span className="text-xs text-offwhite/30">{coachProfile.city}, {coachProfile.state}</span>}
                     </div>
                   </div>
-                  <Link href="/coach-setup" className="text-xs text-offwhite/30 hover:text-wheat transition-colors">Edit</Link>
+                  <div className="flex gap-3">
+                    <button onClick={() => { navigator.clipboard.writeText(`https://cagetrack.com/coach/${coachProfile.id}`); alert('Profile link copied!'); }} className="text-xs text-wheat hover:underline">Share Profile</button>
+                    <Link href="/coach-setup" className="text-xs text-offwhite/30 hover:text-wheat transition-colors">Edit</Link>
                 </div>
               </div>
             )}
