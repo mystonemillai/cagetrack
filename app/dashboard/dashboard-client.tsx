@@ -26,6 +26,9 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
   const [connectedPlayers, setConnectedPlayers] = useState<any[]>([]);
   const [hasSubscription, setHasSubscription] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [showNotifications, setShowNotifications] = useState(true);
+  const [coachReferral, setCoachReferral] = useState<any>(null);
 
   const [showCreatePlayer, setShowCreatePlayer] = useState(false);
   const [firstName, setFirstName] = useState('');
@@ -39,6 +42,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
   const [playerSport, setPlayerSport] = useState('Baseball');
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState('');
+  const [connectingCoach, setConnectingCoach] = useState(false);
 
   const [playerFirstName, setPlayerFirstName] = useState(isPlayer ? (profile?.name?.split(' ')[0] || '') : '');
   const [playerLastName, setPlayerLastName] = useState(isPlayer ? (profile?.name?.split(' ').slice(1).join(' ') || '') : '');
@@ -69,6 +73,42 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
           setConnectedPlayers(connected || []);
         }
       }
+
+      // Load notifications based on last_seen_at
+      const lastSeen = profile?.last_seen_at || new Date(0).toISOString();
+      const playerIds = allPlayers.map((p: any) => p.id);
+
+      if (playerIds.length > 0) {
+        const notifs: any[] = [];
+
+        const { data: newObs } = await supabase.from('observations').select('*, coach_profiles(display_name), players(first_name)').in('player_id', playerIds).gt('created_at', lastSeen).order('created_at', { ascending: false }).limit(10);
+        if (newObs) newObs.forEach(o => notifs.push({ type: 'observation', text: `${o.coach_profiles?.display_name || 'A coach'} added an observation for ${o.players?.first_name || 'your player'}`, date: o.created_at }));
+
+        const { data: newDrills } = await supabase.from('drill_assignments').select('*, coach_profiles(display_name), players(first_name), master_drills(drill_name), coach_drills(drill_name)').in('player_id', playerIds).gt('assigned_at', lastSeen).order('assigned_at', { ascending: false }).limit(10);
+        if (newDrills) newDrills.forEach(d => notifs.push({ type: 'drill', text: `${d.coach_profiles?.display_name || 'A coach'} assigned "${d.master_drills?.drill_name || d.coach_drills?.drill_name || 'a drill'}" to ${d.players?.first_name || 'your player'}`, date: d.assigned_at }));
+
+        const { data: newPlans } = await supabase.from('ai_plans').select('*, coach_profiles(display_name), players(first_name)').in('player_id', playerIds).gt('created_at', lastSeen).order('created_at', { ascending: false }).limit(5);
+        if (newPlans) newPlans.forEach(p => notifs.push({ type: 'ai', text: `${p.coach_profiles?.display_name || 'A coach'} created an AI plan for ${p.players?.first_name || 'your player'}`, date: p.created_at }));
+
+        const { data: newMsgs } = await supabase.from('messages').select('*, players(first_name)').in('player_id', playerIds).gt('created_at', lastSeen).neq('sender_user_id', userId).order('created_at', { ascending: false }).limit(10);
+        if (newMsgs) newMsgs.forEach(m => notifs.push({ type: 'message', text: `${m.sender_name || 'Someone'} sent a message on ${m.players?.first_name || 'your player'}'s profile`, date: m.created_at }));
+
+        notifs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        setNotifications(notifs);
+      }
+
+      // Coach referral check
+      if (typeof window !== 'undefined' && !isCoach) {
+        const coachRef = localStorage.getItem('coach_ref');
+        if (coachRef) {
+          const { data: refCoach } = await supabase.from('coach_profiles').select('id, display_name').eq('id', coachRef).single();
+          if (refCoach) setCoachReferral(refCoach);
+        }
+      }
+
+      // Update last_seen_at
+      await supabase.from('profiles').update({ last_seen_at: new Date().toISOString() }).eq('id', userId);
+
       setDataLoaded(true);
     }
     loadData();
@@ -83,6 +123,29 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
 
   function togglePosition(pos: string) {
     setSelectedPositions(prev => prev.includes(pos) ? prev.filter(p => p !== pos) : [...prev, pos]);
+  }
+
+  async function handleConnectCoachRef() {
+    if (!coachReferral || ownedPlayers.length === 0) return;
+    setConnectingCoach(true);
+    const { error } = await supabase.from('player_coaches').insert({
+      player_id: ownedPlayers[0].id,
+      coach_profile_id: coachReferral.id,
+      status: 'active',
+      invite_code: 'REF-' + Math.random().toString(36).substring(2, 7).toUpperCase(),
+      connected_at: new Date().toISOString(),
+    });
+    if (!error) {
+      localStorage.removeItem('coach_ref');
+      setCoachReferral(null);
+    }
+    setConnectingCoach(false);
+    window.location.reload();
+  }
+
+  function dismissCoachRef() {
+    localStorage.removeItem('coach_ref');
+    setCoachReferral(null);
   }
 
   async function handleCreatePlayer(e: React.FormEvent) {
@@ -211,6 +274,43 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
           <p className="text-offwhite/40 mt-1">{isCoach ? 'Your coaching dashboard' : isPlayer ? 'Your development dashboard' : "Your player's development"}</p>
         </div>
 
+        {/* Notifications */}
+        {showNotifications && notifications.length > 0 && (
+          <div className="mb-6 rounded-xl bg-wheat/5 border border-wheat/15 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-sm font-semibold text-wheat">What&apos;s New</div>
+              <button onClick={() => setShowNotifications(false)} className="text-[10px] text-offwhite/30 hover:text-wheat">Dismiss</button>
+            </div>
+            <div className="space-y-2">
+              {notifications.slice(0, 5).map((n, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <span className="text-xs mt-0.5">{n.type === 'observation' ? '👁️' : n.type === 'drill' ? '📋' : n.type === 'ai' ? '🧠' : '💬'}</span>
+                  <span className="text-xs text-offwhite/60">{n.text}</span>
+                </div>
+              ))}
+              {notifications.length > 5 && (
+                <p className="text-[10px] text-offwhite/30 mt-1">+ {notifications.length - 5} more updates</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Coach referral prompt */}
+        {coachReferral && hasPlayers && (
+          <div className="mb-6 rounded-xl bg-wheat/5 border border-wheat/15 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-semibold text-wheat">Connect with {coachReferral.display_name}?</div>
+                <div className="text-xs text-offwhite/40 mt-0.5">This coach invited you to CageTrack.</div>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={handleConnectCoachRef} disabled={connectingCoach} className="px-4 py-1.5 bg-wheat text-navy text-xs font-display tracking-wider rounded-lg hover:bg-wheat/90 disabled:opacity-50">{connectingCoach ? '...' : 'Connect'}</button>
+                <button onClick={dismissCoachRef} className="px-3 py-1.5 text-xs text-offwhite/30 hover:text-wheat">Dismiss</button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Upgrade banner - only for non-coaches without subscription */}
         {!isCoach && !hasSubscription && (
           <Link href="/settings" className="block mb-6 p-4 rounded-xl bg-wheat/5 border border-wheat/15 hover:border-wheat/30 transition-all">
@@ -296,7 +396,10 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
                       {coachProfile.city && coachProfile.state && <span className="text-xs text-offwhite/30">{coachProfile.city}, {coachProfile.state}</span>}
                     </div>
                   </div>
-                  <Link href="/coach-setup" className="text-xs text-offwhite/30 hover:text-wheat transition-colors">Edit</Link>
+                  <div className="flex gap-3">
+                    <button onClick={() => { navigator.clipboard.writeText(`https://cagetrack.com/coach/${coachProfile.id}`); alert('Profile link copied!'); }} className="text-xs text-wheat hover:underline">Share</button>
+                    <Link href="/coach-setup" className="text-xs text-offwhite/30 hover:text-wheat transition-colors">Edit</Link>
+                  </div>
                 </div>
               </div>
             )}
@@ -321,7 +424,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
             <CoachInviteCodeEntry coachProfile={coachProfile} />
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
               <QuickAction icon="📋" label="Drill Library" href="/drills" />
-              <QuickAction icon="✏️" label="My Drills" href="/coach-setup" />
+              <QuickAction icon="✏️" label="My Drills" href="/my-drills" />
               <QuickAction icon="📖" label="Dev Blog" href="/blog" />
               <QuickAction icon="⚙️" label="Settings" href="/settings" />
             </div>
