@@ -262,6 +262,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
               )}
               <span className="text-xs text-offwhite/40">{profile?.name}</span>
             </div>
+            {profile?.email === 'cagetrack@gmail.com' && <Link href="/admin" className="text-xs text-red-400 hover:text-red-300 transition-colors">Admin</Link>}
             <Link href="/edit-profile" className="text-xs text-offwhite/40 hover:text-wheat transition-colors">Edit Profile</Link>
             <button onClick={handleSignOut} className="text-xs text-offwhite/40 hover:text-wheat transition-colors">Sign Out</button>
           </div>
