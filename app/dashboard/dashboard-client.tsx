@@ -298,7 +298,10 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
                   </div>
                   <div className="flex gap-3">
                     <button onClick={() => { navigator.clipboard.writeText(`https://cagetrack.com/coach/${coachProfile.id}`); alert('Profile link copied!'); }} className="text-xs text-wheat hover:underline">Share Profile</button>
+                    <div className="flex gap-3">
+                    <button onClick={() => { navigator.clipboard.writeText(`https://cagetrack.com/coach/${coachProfile.id}`); alert('Profile link copied!'); }} className="text-xs text-wheat hover:underline">Share Profile</button>
                     <Link href="/coach-setup" className="text-xs text-offwhite/30 hover:text-wheat transition-colors">Edit</Link>
+                  </div>
                 </div>
               </div>
             )}
