@@ -257,15 +257,24 @@ function SubscriptionSection({ players }: { players: any[] }) {
   if (!loaded) return <p className="text-sm text-offwhite/30 animate-pulse">Loading...</p>;
 
   if (subscription) {
+    async function handleManageSub() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const res = await fetch('/api/stripe/portal', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id }) });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+    }
+
     return (
       <div>
         <div className="flex items-center gap-2 mb-2">
           <span className="text-xs text-green-400 bg-green-400/10 px-2 py-0.5 rounded">Active</span>
           <span className="text-sm text-offwhite/60 capitalize">{subscription.plan_type} plan</span>
         </div>
-        <p className="text-xs text-offwhite/30">
+        <p className="text-xs text-offwhite/30 mb-3">
           {subscription.current_period_end ? `Renews ${new Date(subscription.current_period_end).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}` : 'Active subscription'}
         </p>
+        <button onClick={handleManageSub} className="text-xs text-wheat hover:underline">Manage Subscription →</button>
       </div>
     );
   }
