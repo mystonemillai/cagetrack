@@ -27,7 +27,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
   const [hasSubscription, setHasSubscription] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
-  const [showNotifications, setShowNotifications] = useState(true);
+  const [showNotifications, setShowNotifications] = useState(() => { if (typeof window !== 'undefined') { return localStorage.getItem('notif_dismissed') !== new Date().toDateString(); } return true; });
   const [coachReferral, setCoachReferral] = useState<any>(null);
 
   const [showCreatePlayer, setShowCreatePlayer] = useState(false);
@@ -279,7 +279,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
           <div className="mb-6 rounded-xl bg-wheat/5 border border-wheat/15 p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="text-sm font-semibold text-wheat">What&apos;s New</div>
-              <button onClick={() => setShowNotifications(false)} className="text-[10px] text-offwhite/30 hover:text-wheat">Dismiss</button>
+              <button onClick={() => { setShowNotifications(false); localStorage.setItem('notif_dismissed', new Date().toDateString()); }} className="text-[10px] text-offwhite/30 hover:text-wheat">Dismiss</button>
             </div>
             <div className="space-y-2">
               {notifications.slice(0, 5).map((n, i) => (
