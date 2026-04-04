@@ -256,7 +256,7 @@ function SubscriptionSection({ players }: { players: any[] }) {
 
   if (!loaded) return <p className="text-sm text-offwhite/30 animate-pulse">Loading...</p>;
 
-  if (subscription) {
+
     async function handleManageSub() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -264,7 +264,7 @@ function SubscriptionSection({ players }: { players: any[] }) {
       const data = await res.json();
       if (data.url) window.location.href = data.url;
     }
-
+if (subscription) {
     return (
       <div>
         <div className="flex items-center gap-2 mb-2">
