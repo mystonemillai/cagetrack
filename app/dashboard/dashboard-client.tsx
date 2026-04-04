@@ -27,7 +27,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
   const [hasSubscription, setHasSubscription] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
-  const [showNotifications, setShowNotifications] = useState(() => { if (typeof window !== 'undefined') { return localStorage.getItem('notif_dismissed_' + userId) !== new Date().toDateString(); } return true; });
+  const [showNotifications, setShowNotifications] = useState(true);
   const [coachReferral, setCoachReferral] = useState<any>(null);
 
   const [showCreatePlayer, setShowCreatePlayer] = useState(false);
@@ -279,7 +279,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
           <div className="mb-6 rounded-xl bg-wheat/5 border border-wheat/15 p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="text-sm font-semibold text-wheat">What&apos;s New</div>
-              <button onClick={() => { setShowNotifications(false); localStorage.setItem('notif_dismissed_' + userId, new Date().toDateString()); }} className="text-[10px] text-offwhite/30 hover:text-wheat">Dismiss</button>
+              <button onClick={() => setShowNotifications(false)} className="text-[10px] text-offwhite/30 hover:text-wheat">Dismiss</button>
             </div>
             <div className="space-y-2">
               {notifications.slice(0, 5).map((n, i) => (
@@ -296,15 +296,15 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
         )}
 
         {/* Coach referral prompt */}
-        {coachReferral && hasPlayers && (
+        {coachReferral && (
           <div className="mb-6 rounded-xl bg-wheat/5 border border-wheat/15 p-4">
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-sm font-semibold text-wheat">Connect with {coachReferral.display_name}?</div>
-                <div className="text-xs text-offwhite/40 mt-0.5">This coach invited you to CageTrack.</div>
+                <div className="text-xs text-offwhite/40 mt-0.5">{hasPlayers ? "This coach invited you to CageTrack." : "Create your player profile first, then connect."}</div>
               </div>
               <div className="flex gap-2">
-                <button onClick={handleConnectCoachRef} disabled={connectingCoach} className="px-4 py-1.5 bg-wheat text-navy text-xs font-display tracking-wider rounded-lg hover:bg-wheat/90 disabled:opacity-50">{connectingCoach ? '...' : 'Connect'}</button>
+                <button onClick={handleConnectCoachRef} disabled={connectingCoach || !hasPlayers} className="px-4 py-1.5 bg-wheat text-navy text-xs font-display tracking-wider rounded-lg hover:bg-wheat/90 disabled:opacity-50">{connectingCoach ? '...' : 'Connect'}</button>
                 <button onClick={dismissCoachRef} className="px-3 py-1.5 text-xs text-offwhite/30 hover:text-wheat">Dismiss</button>
               </div>
             </div>
