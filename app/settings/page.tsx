@@ -286,12 +286,12 @@ if (subscription) {
       <p className="text-sm text-offwhite/40 mb-4">Choose a plan to unlock all features.</p>
       <div className="flex gap-3">
         <button onClick={() => handleCheckout('monthly')} disabled={checkingOut !== ''} className="flex-1 p-3 rounded-lg border border-wheat/20 text-center hover:border-wheat/40 transition-colors disabled:opacity-50">
-          <div className="font-display text-xl text-wheat">$15</div>
+          <div className="font-display text-xl text-wheat">$10</div>
           <div className="text-[10px] text-offwhite/40 mt-0.5">{checkingOut === 'monthly' ? 'Redirecting...' : 'per month'}</div>
         </button>
         <button onClick={() => handleCheckout('yearly')} disabled={checkingOut !== ''} className="flex-1 p-3 rounded-lg border border-wheat/20 text-center hover:border-wheat/40 transition-colors disabled:opacity-50 relative">
-          <div className="absolute -top-2 right-2 text-[8px] bg-green-500 text-white px-1.5 py-0.5 rounded font-bold">SAVE $30</div>
-          <div className="font-display text-xl text-wheat">$150</div>
+          <div className="absolute -top-2 right-2 text-[8px] bg-green-500 text-white px-1.5 py-0.5 rounded font-bold">SAVE $20</div>
+          <div className="font-display text-xl text-wheat">$100</div>
           <div className="text-[10px] text-offwhite/40 mt-0.5">{checkingOut === 'yearly' ? 'Redirecting...' : 'per year'}</div>
         </button>
       </div>
