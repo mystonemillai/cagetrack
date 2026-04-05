@@ -258,12 +258,14 @@ function SubscriptionSection({ players }: { players: any[] }) {
 
 
     async function handleManageSub() {
+    try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) { alert('Not logged in'); return; }
       const res = await fetch('/api/stripe/portal', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id }) });
       const data = await res.json();
-      if (data.url) window.location.href = data.url;
-    }
+      if (data.url) { window.location.href = data.url; } else { alert('Error: ' + (data.error || 'No URL returned')); }
+    } catch (err: any) { alert('Error: ' + err.message); }
+  }
 if (subscription) {
     return (
       <div>
