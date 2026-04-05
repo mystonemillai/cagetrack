@@ -7,8 +7,8 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 const PRICES: Record<string, string> = {
-  monthly: 'price_1THbtBDIGPurwVzG1iV8GIWV',
-  yearly: 'price_1THbu6DIGPurwVzGUcJqFhVn',
+  monthly: 'price_1TIh5FDIGPurwVzG5yDN4Tk0',
+  yearly: 'price_1TIh5tDIGPurwVzGBG9TnSxi',
 };
 
 export async function POST(request: NextRequest) {
