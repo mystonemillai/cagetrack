@@ -39,7 +39,8 @@ export async function POST(request: NextRequest) {
         playerId: playerId || '',
         plan: plan,
       },
-      subscription_data: {
+     subscription_data: {
+        trial_period_days: 14,
         metadata: {
           userId: user.id,
           playerId: playerId || '',
