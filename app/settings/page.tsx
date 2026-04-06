@@ -20,11 +20,13 @@ export default function SettingsPage() {
 
   const [profile, setProfile] = useState<any>(null);
   const [players, setPlayers] = useState<any[]>([]);
+  const [coachProfile, setCoachProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selectedPlayer, setSelectedPlayer] = useState<string>('');
 
   const [parentCode, setParentCode] = useState('');
   const [coachCode, setCoachCode] = useState('');
+  const [playerCode, setPlayerCode] = useState('');
   const [codeLoading, setCodeLoading] = useState(false);
   const [codeError, setCodeError] = useState('');
 
@@ -40,7 +42,10 @@ export default function SettingsPage() {
       const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).single();
       setProfile(p);
 
+      // Load owned players
       const { data: pl } = await supabase.from('players').select('*').eq('owner_user_id', user.id);
+
+      // Also load linked players for parents
       const { data: linked } = await supabase.from('parent_links').select('player_id').eq('parent_user_id', user.id).eq('status', 'active');
       let allPlayers = pl || [];
       if (linked && linked.length > 0) {
@@ -50,6 +55,12 @@ export default function SettingsPage() {
       }
       setPlayers(allPlayers);
       if (allPlayers.length > 0) setSelectedPlayer(allPlayers[0].id);
+
+      // Load coach profile if coach
+      if (p?.role === 'coach') {
+        const { data: cp } = await supabase.from('coach_profiles').select('*').eq('user_id', user.id).single();
+        setCoachProfile(cp);
+      }
 
       setLoading(false);
     }
@@ -84,18 +95,70 @@ export default function SettingsPage() {
     setCodeLoading(false);
   }
 
+  // Coach generates a code that a player/parent can enter to connect
+  async function handleGeneratePlayerInvite() {
+    if (!coachProfile) return;
+    setCodeError('');
+    setCodeLoading(true);
+    const code = generateCode('CT-');
+    // Store as a pending connection with no player yet - player will claim it
+    const { error } = await supabase.from('player_coaches').insert({
+      player_id: null, coach_profile_id: coachProfile.id,
+      invite_code: code, status: 'pending_player',
+    });
+    if (error) { setCodeError(error.message); setCodeLoading(false); return; }
+    setPlayerCode(code);
+    setCodeLoading(false);
+  }
+
   async function handleLinkToPlayer(e: React.FormEvent) {
     e.preventDefault();
     setLinkError('');
     setLinkLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    const { error: updateError } = await supabase.from('parent_links').update({
-      parent_user_id: user.id, status: 'active',
-    }).eq('link_code', linkCode.trim().toUpperCase()).eq('status', 'pending');
-    if (updateError) { setLinkError(updateError.message); setLinkLoading(false); return; }
+
+    const trimmedCode = linkCode.trim().toUpperCase();
+
+    // Check if it's a PL- code (parent link)
+    if (trimmedCode.startsWith('PL-')) {
+      const { error: updateError } = await supabase.from('parent_links').update({
+        parent_user_id: user.id, status: 'active',
+      }).eq('link_code', trimmedCode).eq('status', 'pending');
+      if (updateError) { setLinkError('Invalid or expired code.'); setLinkLoading(false); return; }
+      setLinkLoading(false);
+      window.location.href = '/dashboard';
+      return;
+    }
+
+    // Check if it's a CT- code (coach invite to player)
+    if (trimmedCode.startsWith('CT-')) {
+      // Find the pending coach invite
+      const { data: invite } = await supabase.from('player_coaches').select('*').eq('invite_code', trimmedCode).eq('status', 'pending_player').single();
+
+      if (invite) {
+        // Coach generated this code - player/parent needs to connect their player
+        if (players.length === 0) {
+          setLinkError('Create a player profile first, then enter this code.');
+          setLinkLoading(false);
+          return;
+        }
+        const { error: updateError } = await supabase.from('player_coaches').update({
+          player_id: players[0].id, status: 'active', connected_at: new Date().toISOString(),
+        }).eq('id', invite.id);
+        if (updateError) { setLinkError(updateError.message); setLinkLoading(false); return; }
+        setLinkLoading(false);
+        window.location.href = '/dashboard';
+        return;
+      }
+
+      setLinkError('Invalid or expired code.');
+      setLinkLoading(false);
+      return;
+    }
+
+    setLinkError('Invalid code format. Codes start with PL- or CT-.');
     setLinkLoading(false);
-    window.location.href = '/dashboard';
   }
 
   async function handleSignOut() {
@@ -137,10 +200,12 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Invite Player / Link Parent (contextual label) */}
+          {/* === PLAYER/PARENT CODE SECTIONS === */}
+
+          {/* Invite Parent / Invite Player (for players and parents with players) */}
           {(isPlayer || isFamily) && players.length > 0 && (
             <div className="rounded-xl bg-navy-light border border-wheat/8 p-6">
-              <h2 className="font-display text-lg text-wheat mb-1">{isPlayer ? 'Link a Parent' : 'Invite Your Player'}</h2>
+              <h2 className="font-display text-lg text-wheat mb-1">{isPlayer ? 'Invite a Parent' : 'Invite Your Player'}</h2>
               <p className="text-xs text-offwhite/40 mb-4">{isPlayer ? 'Generate a code to share with your parent so they can follow your progress.' : 'Generate a code to share with your player so you can track their development.'}</p>
 
               {players.length > 1 && (
@@ -166,7 +231,7 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* Link to Existing Player (for parents) */}
+          {/* Link to Existing Player (for parents without a player) */}
           {isFamily && (
             <div className="rounded-xl bg-navy-light border border-wheat/8 p-6">
               <h2 className="font-display text-lg text-wheat mb-1">Link to Existing Player</h2>
@@ -179,7 +244,7 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* Invite a Coach */}
+          {/* Invite a Coach (for players and parents) */}
           {(isPlayer || isFamily) && players.length > 0 && (
             <div className="rounded-xl bg-navy-light border border-wheat/8 p-6">
               <h2 className="font-display text-lg text-wheat mb-1">Invite a Coach</h2>
@@ -195,21 +260,64 @@ export default function SettingsPage() {
                   {codeLoading ? 'Generating...' : 'Generate Coach Invite Code'}
                 </button>
               )}
+              {codeError && !parentCode && !coachCode && <p className="text-red-400 text-xs mt-2">{codeError}</p>}
+            </div>
+          )}
+
+          {/* === COACH CODE SECTIONS === */}
+
+          {/* Coach: Invite a Player or Parent */}
+          {isCoach && coachProfile && (
+            <div className="rounded-xl bg-navy-light border border-wheat/8 p-6">
+              <h2 className="font-display text-lg text-wheat mb-1">Invite a Player</h2>
+              <p className="text-xs text-offwhite/40 mb-4">Generate a code to share with a player or parent. They enter it after signing up to connect with you.</p>
+              {playerCode ? (
+                <div className="text-center p-4 bg-navy rounded-lg border border-wheat/15">
+                  <p className="text-xs text-offwhite/40 mb-2">Share this code with a player or parent:</p>
+                  <div className="font-display text-3xl tracking-[0.3em] text-wheat">{playerCode}</div>
+                  <button onClick={() => { navigator.clipboard.writeText(playerCode); }} className="mt-2 text-xs text-offwhite/30 hover:text-wheat transition-colors">Copy to clipboard</button>
+                </div>
+              ) : (
+                <button onClick={handleGeneratePlayerInvite} disabled={codeLoading} className="px-4 py-2 bg-wheat/10 border border-wheat/20 text-wheat text-xs font-semibold uppercase tracking-wider rounded-lg hover:bg-wheat/20 transition-colors disabled:opacity-50">
+                  {codeLoading ? 'Generating...' : 'Generate Invite Code'}
+                </button>
+              )}
               {codeError && <p className="text-red-400 text-xs mt-2">{codeError}</p>}
             </div>
           )}
 
-          {/* Subscription - at the bottom, not for coaches */}
+          {/* Coach: Enter a code from a player */}
+          {isCoach && (
+            <div className="rounded-xl bg-navy-light border border-wheat/8 p-6">
+              <h2 className="font-display text-lg text-wheat mb-1">Enter Player Code</h2>
+              <p className="text-xs text-offwhite/40 mb-4">If a player or parent shared a code with you, enter it here to connect.</p>
+              <CoachCodeEntry coachProfile={coachProfile} />
+            </div>
+          )}
+
+          {/* Player/Parent: Enter a coach code */}
+          {(isPlayer || isFamily) && (
+            <div className="rounded-xl bg-navy-light border border-wheat/8 p-6">
+              <h2 className="font-display text-lg text-wheat mb-1">Enter a Coach Code</h2>
+              <p className="text-xs text-offwhite/40 mb-4">If a coach shared a code with you, enter it here to connect.</p>
+              <form onSubmit={handleLinkToPlayer} className="flex gap-2">
+                <input type="text" value={linkCode} onChange={(e) => setLinkCode(e.target.value)} className="flex-1 p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors font-display tracking-widest uppercase text-center" placeholder="CT-XXXXX" maxLength={10} />
+                <button type="submit" disabled={linkLoading || !linkCode} className="px-5 py-3 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors disabled:opacity-50">{linkLoading ? '...' : 'Connect'}</button>
+              </form>
+              {linkError && <p className="text-red-400 text-xs mt-2">{linkError}</p>}
+            </div>
+          )}
+
+          {/* Sign Out */}
+          <button onClick={handleSignOut} className="w-full p-4 rounded-xl border border-red-500/20 text-red-400/60 hover:text-red-400 hover:border-red-500/40 transition-all text-sm">Sign Out</button>
+
+          {/* Subscription - at bottom, not for coaches */}
           {!isCoach && (
             <div className="rounded-xl bg-navy-light border border-wheat/8 p-6">
               <h2 className="font-display text-lg text-wheat mb-3">Subscription</h2>
               <SubscriptionSection players={players} />
             </div>
           )}
-          
-           {/* Sign Out */}
-          <button onClick={handleSignOut} className="w-full p-4 rounded-xl border border-red-500/20 text-red-400/60 hover:text-red-400 hover:border-red-500/40 transition-all text-sm">Sign Out</button>
-
         </div>
       </main>
 
@@ -221,6 +329,38 @@ export default function SettingsPage() {
           <Link href="/settings" className="flex flex-col items-center gap-0.5 px-3 py-1"><span className="text-lg">⚙️</span><span className="text-[10px] text-wheat">Settings</span></Link>
         </div>
       </nav>
+    </div>
+  );
+}
+
+function CoachCodeEntry({ coachProfile }: { coachProfile: any }) {
+  const [code, setCode] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const supabase = createClient();
+
+  async function handleConnect(e: React.FormEvent) {
+    e.preventDefault();
+    if (!coachProfile) { setError('Set up your coach profile first.'); return; }
+    setError(''); setSuccess(''); setLoading(true);
+    const { data, error: lookupError } = await supabase.from('player_coaches').select('*, players(first_name, last_name)').eq('invite_code', code.trim().toUpperCase()).eq('status', 'pending').single();
+    if (lookupError || !data) { setError('Invalid or expired code.'); setLoading(false); return; }
+    const { error: updateError } = await supabase.from('player_coaches').update({ coach_profile_id: coachProfile.id, status: 'active', connected_at: new Date().toISOString() }).eq('id', data.id);
+    if (updateError) { setError(updateError.message); setLoading(false); return; }
+    setSuccess(`Connected to ${data.players.first_name} ${data.players.last_name}!`);
+    setCode(''); setLoading(false);
+    setTimeout(() => window.location.href = '/dashboard', 1500);
+  }
+
+  return (
+    <div>
+      <form onSubmit={handleConnect} className="flex gap-2">
+        <input type="text" value={code} onChange={(e) => setCode(e.target.value)} className="flex-1 p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors font-display tracking-widest uppercase text-center" placeholder="CT-XXXXX" maxLength={10} />
+        <button type="submit" disabled={loading || !code} className="px-5 py-3 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors disabled:opacity-50">{loading ? '...' : 'Connect'}</button>
+      </form>
+      {error && <p className="text-red-400 text-xs mt-2">{error}</p>}
+      {success && <p className="text-green-400 text-xs mt-2">{success}</p>}
     </div>
   );
 }
@@ -254,19 +394,19 @@ function SubscriptionSection({ players }: { players: any[] }) {
     if (data.url) { window.location.href = data.url; } else { setCheckingOut(''); }
   }
 
-  if (!loaded) return <p className="text-sm text-offwhite/30 animate-pulse">Loading...</p>;
-
-
-    async function handleManageSub() {
+  async function handleManageSub() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { alert('Not logged in'); return; }
+      if (!user) return;
       const res = await fetch('/api/stripe/portal', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id }) });
       const data = await res.json();
-      if (data.url) { window.location.href = data.url; } else { alert('Error: ' + (data.error || 'No URL returned')); }
+      if (data.url) { window.location.href = data.url; } else { alert('Error: ' + (data.error || 'Could not open portal')); }
     } catch (err: any) { alert('Error: ' + err.message); }
   }
-if (subscription) {
+
+  if (!loaded) return <p className="text-sm text-offwhite/30 animate-pulse">Loading...</p>;
+
+  if (subscription) {
     return (
       <div>
         <div className="flex items-center gap-2 mb-2">
