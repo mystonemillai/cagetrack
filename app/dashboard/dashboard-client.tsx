@@ -270,9 +270,16 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
       </nav>
 
       <main className="pt-20 pb-24 px-4 max-w-5xl mx-auto">
-        <div className="mb-8">
-          <h1 className="font-display text-3xl sm:text-4xl">{profile?.name ? `Hey, ${profile.name.split(' ')[0]}` : 'Welcome'}</h1>
-          <p className="text-offwhite/40 mt-1">{isCoach ? 'Your coaching dashboard' : isPlayer ? 'Your development dashboard' : "Your player's development"}</p>
+        <div className="mb-8 flex items-center gap-4">
+          {profile?.avatar_url ? (
+            <img src={profile.avatar_url} alt="" className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-wheat/20" />
+          ) : (
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-wheat/10 flex items-center justify-center text-2xl flex-shrink-0">👤</div>
+          )}
+          <div>
+            <h1 className="font-display text-4xl sm:text-5xl">{profile?.name ? `Hey, ${profile.name.split(' ')[0]}` : 'Welcome'}</h1>
+            <p className="text-offwhite/40 mt-1">{isCoach ? 'Your coaching dashboard' : isPlayer ? 'Your development dashboard' : "Your player's development"}</p>
+          </div>
         </div>
 
         {/* Notifications */}
