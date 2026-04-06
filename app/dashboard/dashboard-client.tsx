@@ -190,7 +190,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
         <main className="pt-20 pb-8 px-4 max-w-lg mx-auto">
           <div className="text-center mb-8">
             <div className="w-14 h-14 rounded-xl bg-wheat/10 flex items-center justify-center mx-auto mb-4 text-2xl">⚾</div>
-            <h1 className="font-display text-3xl sm:text-4xl mb-2">{isPlayer ? 'Complete Your Profile' : 'Add Your Player'}</h1>
+            <h1 className="font-display text-4xl sm:text-5xl mb-2">{isPlayer ? 'Complete Your Profile' : 'Add Your Player'}</h1>
             <p className="text-offwhite/40">{isPlayer ? 'Set up your development profile.' : "Create your player's development profile."}</p>
           </div>
           <form onSubmit={handleCreatePlayer} className="space-y-5">
@@ -342,7 +342,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
             {hasPlayers && (
               <div className="space-y-4 mb-8">
                 {ownedPlayers.map((player) => (
-                  <Link key={player.id} href={`/player/${player.id}`} className="block rounded-xl bg-navy-light border border-wheat/8 p-6 hover:border-wheat/20 transition-all cursor-pointer">
+                  <Link key={player.id} href={`/player/${player.id}`} className="block rounded-xl bg-navy-light border border-wheat/8 p-6 hover:border-wheat/20 card-hover transition-all cursor-pointer">
                     <div className="flex items-start justify-between">
                       <div>
                         <h3 className="font-display text-xl tracking-wide">{player.first_name} {player.last_name}</h3>
