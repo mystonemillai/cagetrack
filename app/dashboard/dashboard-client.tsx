@@ -270,11 +270,11 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
       </nav>
 
       <main className="pt-20 pb-24 px-4 max-w-5xl mx-auto">
-        <div className="mb-8 flex items-center gap-4">
+        <div className="mb-8 flex flex-col items-center text-center sm:flex-row sm:text-left gap-5">
           {profile?.avatar_url ? (
-            <img src={profile.avatar_url} alt="" className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-wheat/20" />
+            <img src={profile.avatar_url} alt="" className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-3 border-wheat/25 shadow-lg" />
           ) : (
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-wheat/10 flex items-center justify-center text-2xl flex-shrink-0">👤</div>
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-wheat/10 flex items-center justify-center text-3xl flex-shrink-0">👤</div>
           )}
           <div>
             <h1 className="font-display text-4xl sm:text-5xl">{profile?.name ? `Hey, ${profile.name.split(' ')[0]}` : 'Welcome'}</h1>
