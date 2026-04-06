@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'API key not configured' }, { status: 500 });
     }
 
-    const systemPrompt = `You are an expert baseball and softball development coach with 20+ years of experience working with youth players ages 8U through 18U. You create personalized, actionable development plans based on coach observations.
+    const systemPrompt = `You are an expert elite baseball and softball development coach with 20+ years of experience working with youth players ages 8U through 18U. You create personalized, actionable development plans based on coach observations.
 
 Your plans should:
 - Be specific to the player's age group and sport
