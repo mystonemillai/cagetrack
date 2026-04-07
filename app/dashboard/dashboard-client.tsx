@@ -466,7 +466,7 @@ function CoachInviteCodeEntry({ coachProfile }: { coachProfile: any }) {
     const { data, error: lookupError } = await supabase.from('player_coaches').select('*, players(first_name, last_name)').eq('invite_code', code.trim().toUpperCase()).eq('status', 'pending').single();
     if (lookupError || !data) { setError('Invalid or expired invite code.'); setLoading(false); return; }
     const { error: updateError } = await supabase.from('player_coaches').update({ coach_profile_id: coachProfile.id, status: 'active', connected_at: new Date().toISOString() }).eq('id', data.id);
-    if (updateError) { setError(updateError.message); setLoading(false); return; }
+    if (updateError) { setError(updateError.message.includes('duplicate') ? 'You are already connected to this player.' : updateError.message); setLoading(false); return; }
     setSuccess(`Connected to ${data.players.first_name} ${data.players.last_name}!`);
     setCode(''); setLoading(false);
     setTimeout(() => window.location.href = '/dashboard', 1500);
