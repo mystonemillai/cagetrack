@@ -19,7 +19,7 @@ export default function CoachSetupPage() {
   const [existingProfile, setExistingProfile] = useState<any>(null);
 
   const [displayName, setDisplayName] = useState('');
-  const [specialty, setSpecialty] = useState('');
+  const [specialties, setSpecialties] = useState<string[]>([]);
   const [coachType, setCoachType] = useState('');
   const [bio, setBio] = useState('');
   const [videoIntroUrl, setVideoIntroUrl] = useState('');
@@ -43,7 +43,7 @@ export default function CoachSetupPage() {
       if (cp) {
         setExistingProfile(cp);
         setDisplayName(cp.display_name || '');
-        setSpecialty(cp.specialty || '');
+        setSpecialties(cp.specialties || (cp.specialty ? [cp.specialty] : []));
         setCoachType(cp.coach_type || '');
         setBio(cp.bio || '');
         setVideoIntroUrl(cp.video_intro_url || '');
@@ -65,6 +65,10 @@ export default function CoachSetupPage() {
     loadData();
   }, []);
 
+  function toggleSpecialty(spec: string) {
+    setSpecialties(prev => prev.includes(spec) ? prev.filter(s => s !== spec) : [...prev, spec]);
+  }
+
   function toggleSport(sport: string) {
     setSports(prev => prev.includes(sport) ? prev.filter(s => s !== sport) : [...prev, sport]);
   }
@@ -79,7 +83,8 @@ export default function CoachSetupPage() {
     const profileData = {
       user_id: userId,
       display_name: displayName,
-      specialty: specialty || null,
+      specialty: specialties.length > 0 ? specialties[0] : null,
+      specialties: specialties,
       coach_type: coachType.toLowerCase().replace(/ /g, '_') || null,
       bio: bio || null,
       video_intro_url: videoIntroUrl || null,
@@ -147,10 +152,10 @@ export default function CoachSetupPage() {
           </div>
 
           <div>
-            <label className="block text-xs uppercase tracking-widest text-offwhite/40 mb-2">Specialty</label>
+            <label className="block text-xs uppercase tracking-widest text-offwhite/40 mb-2">Specialties <span className="text-offwhite/20">(select all that apply)</span></label>
             <div className="flex flex-wrap gap-2">
               {SPECIALTIES.map((s) => (
-                <button key={s} type="button" onClick={() => setSpecialty(s)} className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${specialty === s ? 'bg-wheat text-navy' : 'bg-navy-light border border-wheat/10 text-offwhite/50 hover:border-wheat/25'}`}>{s}</button>
+                <button key={s} type="button" onClick={() => toggleSpecialty(s)} className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${specialties.includes(s) ? 'bg-wheat text-navy' : 'bg-navy-light border border-wheat/10 text-offwhite/50 hover:border-wheat/25'}`}>{s}</button>
               ))}
             </div>
           </div>
