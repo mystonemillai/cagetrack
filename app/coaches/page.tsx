@@ -23,6 +23,8 @@ export default function CoachDirectoryPage() {
   const [connecting, setConnecting] = useState<string | null>(null);
   const [connectSuccess, setConnectSuccess] = useState<string | null>(null);
   const [connectError, setConnectError] = useState<string | null>(null);
+  const [existingConnections, setExistingConnections] = useState<any[]>([]);
+  const [hasSubscription, setHasSubscription] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -43,6 +45,15 @@ export default function CoachDirectoryPage() {
         if (lp) allPlayers = [...allPlayers, ...lp];
       }
       setPlayers(allPlayers);
+
+      if (allPlayers.length > 0) {
+        const playerIds = allPlayers.map((p: any) => p.id);
+        const { data: existing } = await supabase.from('player_coaches').select('coach_profile_id, status').in('player_id', playerIds);
+        setExistingConnections(existing || []);
+      }
+
+      const { data: sub } = await supabase.from('subscriptions').select('id').eq('billing_user_id', user.id).eq('status', 'active').single();
+      setHasSubscription(!!sub);
 
       const { data: coachData } = await supabase
         .from('coach_profiles')
@@ -71,21 +82,25 @@ export default function CoachDirectoryPage() {
       setConnectError('Create a player profile first before connecting with a coach.');
       return;
     }
+    if (!hasSubscription) {
+      setConnectError(null);
+      setExpandedCoach(null);
+      router.push('/settings');
+      return;
+    }
     setConnecting(coachId);
     setConnectError(null);
 
     const { error } = await supabase.from('player_coaches').insert({
       player_id: players[0].id,
       coach_profile_id: coachId,
-      status: 'active',
+      status: 'pending_approval',
       invite_code: 'DIR-' + Math.random().toString(36).substring(2, 7).toUpperCase(),
-      connected_at: new Date().toISOString(),
     });
 
     if (error) {
       if (error.message.includes('duplicate')) {
-        setConnectSuccess(coachId);
-        setConnectError(null);
+        setConnectError('You already have a connection with this coach.');
       } else {
         setConnectError(error.message);
       }
@@ -94,6 +109,7 @@ export default function CoachDirectoryPage() {
     }
 
     setConnectSuccess(coachId);
+    setExistingConnections([...existingConnections, { coach_profile_id: coachId, status: 'pending_approval' }]);
     setConnecting(null);
   }
 
@@ -207,13 +223,16 @@ export default function CoachDirectoryPage() {
                       <a href={coach.video_intro_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-wheat hover:underline mb-4">▶ Watch Intro Video</a>
                     )}
                     <div className="flex gap-3">
-                      {connectSuccess === coach.id ? (
-                        <span className="px-6 py-2.5 bg-green-500/10 text-green-400 text-sm font-display tracking-wider rounded-lg">Connected!</span>
-                      ) : (
-                        <button onClick={() => handleConnect(coach.id)} disabled={connecting === coach.id} className="px-6 py-2.5 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors disabled:opacity-50">
-                          {connecting === coach.id ? 'Connecting...' : 'Connect with ' + coach.display_name}
-                        </button>
-                      )}
+                      {(() => {
+                        const existing = existingConnections.find(c => c.coach_profile_id === coach.id);
+                        if (existing?.status === 'active') return <span className="px-6 py-2.5 bg-green-500/10 text-green-400 text-sm font-display tracking-wider rounded-lg">Connected</span>;
+                        if (existing?.status === 'pending_approval' || connectSuccess === coach.id) return <span className="px-6 py-2.5 bg-wheat/10 text-wheat text-sm font-display tracking-wider rounded-lg">Request Sent — Waiting for Approval</span>;
+                        return (
+                          <button onClick={() => handleConnect(coach.id)} disabled={connecting === coach.id} className="px-6 py-2.5 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors disabled:opacity-50">
+                            {connecting === coach.id ? 'Sending Request...' : 'Request to Connect'}
+                          </button>
+                        );
+                      })()}
                     </div>
                   </div>
                 )}
