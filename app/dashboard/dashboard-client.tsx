@@ -72,7 +72,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
         if (cp) {
           const { data: connected } = await supabase.from('player_coaches').select('*, players(*)').eq('coach_profile_id', cp.id).eq('status', 'active');
           setConnectedPlayers(connected || []);
-          const { data: pending } = await supabase.from('player_coaches').select('*, players(first_name, last_name, age_group, sport)').eq('coach_profile_id', cp.id).eq('status', 'pending_approval').order('created_at', { ascending: false });
+          const { data: pending } = await supabase.from('player_coaches').select('*, players(first_name, last_name, age_group, sport)').eq('coach_profile_id', cp.id).eq('status', 'pending_approval');
           setPendingRequests(pending || []);
         }
       }
