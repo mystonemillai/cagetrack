@@ -82,10 +82,10 @@ export default async function PublicCoachProfile({ params }: { params: { id: str
 
         <div className="rounded-xl bg-wheat/5 border border-wheat/15 p-8 text-center mt-6">
           <h2 className="font-display text-2xl mb-2">Connect with {coach.display_name}</h2>
-          <p className="text-sm text-offwhite/40 mb-6 max-w-sm mx-auto">Sign up for CageTrack to connect and start tracking your player&apos;s development.</p>
+          <p className="text-sm text-offwhite/40 mb-6 max-w-sm mx-auto">Connect on CageTrack to start tracking your player&apos;s development.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href={signupUrl} className="px-8 py-3 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors">Sign Up to Connect</Link>
-            <Link href="/auth/login" className="px-8 py-3 bg-wheat/10 border border-wheat/20 text-wheat font-display text-sm tracking-wider rounded-lg hover:bg-wheat/20 transition-colors">Already have an account? Log In</Link>
+            <Link href="/dashboard" className="px-8 py-3 bg-wheat/10 border border-wheat/20 text-wheat font-display text-sm tracking-wider rounded-lg hover:bg-wheat/20 transition-colors">Go to Dashboard</Link>
           </div>
         </div>
 
