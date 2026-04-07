@@ -24,6 +24,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
   const [ownedPlayers, setOwnedPlayers] = useState<any[]>([]);
   const [coachProfile, setCoachProfile] = useState<any>(null);
   const [connectedPlayers, setConnectedPlayers] = useState<any[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<any[]>([]);
   const [hasSubscription, setHasSubscription] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -71,6 +72,8 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
         if (cp) {
           const { data: connected } = await supabase.from('player_coaches').select('*, players(*)').eq('coach_profile_id', cp.id).eq('status', 'active');
           setConnectedPlayers(connected || []);
+          const { data: pending } = await supabase.from('player_coaches').select('*, players(first_name, last_name, age_group, sport)').eq('coach_profile_id', cp.id).eq('status', 'pending_approval');
+          setPendingRequests(pending || []);
         }
       }
 
@@ -146,6 +149,16 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
   function dismissCoachRef() {
     localStorage.removeItem('coach_ref');
     setCoachReferral(null);
+  }
+
+  async function handleApproveRequest(requestId: string) {
+    await supabase.from('player_coaches').update({ status: 'active', connected_at: new Date().toISOString() }).eq('id', requestId);
+    window.location.reload();
+  }
+
+  async function handleDenyRequest(requestId: string) {
+    await supabase.from('player_coaches').delete().eq('id', requestId);
+    window.location.reload();
   }
 
   async function handleCreatePlayer(e: React.FormEvent) {
@@ -411,6 +424,30 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
                 </div>
               </div>
             )}
+            {pendingRequests.length > 0 && (
+              <div className="mb-6">
+                <h2 className="font-display text-xl text-wheat mb-3">Connection Requests</h2>
+                <div className="space-y-3">
+                  {pendingRequests.map((req) => (
+                    <div key={req.id} className="rounded-xl bg-wheat/5 border border-wheat/15 p-5">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-display text-lg tracking-wide">{req.players?.first_name} {req.players?.last_name}</h3>
+                          <div className="flex gap-2 mt-1">
+                            {req.players?.age_group && <span className="text-xs text-wheat bg-wheat/10 px-2 py-0.5 rounded">{req.players.age_group}</span>}
+                            {req.players?.sport && <span className="text-xs text-offwhite/30 bg-offwhite/5 px-2 py-0.5 rounded">{req.players.sport}</span>}
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button onClick={() => handleApproveRequest(req.id)} className="px-4 py-2 bg-wheat text-navy text-xs font-display tracking-wider rounded-lg hover:bg-wheat/90">Approve</button>
+                          <button onClick={() => handleDenyRequest(req.id)} className="px-4 py-2 bg-offwhite/5 border border-offwhite/10 text-offwhite/40 text-xs font-display tracking-wider rounded-lg hover:text-red-400 hover:border-red-400/20">Deny</button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             {connectedPlayers.length > 0 && (
               <div className="mb-6">
                 <h2 className="font-display text-xl text-offwhite/60 mb-3">Your Players</h2>
@@ -466,7 +503,7 @@ function CoachInviteCodeEntry({ coachProfile }: { coachProfile: any }) {
     const { data, error: lookupError } = await supabase.from('player_coaches').select('*, players(first_name, last_name)').eq('invite_code', code.trim().toUpperCase()).eq('status', 'pending').single();
     if (lookupError || !data) { setError('Invalid or expired invite code.'); setLoading(false); return; }
     const { error: updateError } = await supabase.from('player_coaches').update({ coach_profile_id: coachProfile.id, status: 'active', connected_at: new Date().toISOString() }).eq('id', data.id);
-    if (updateError) { setError(updateError.message.includes('duplicate') ? 'You are already connected to this player.' : updateError.message); setLoading(false); return; }
+    if (updateError) { setError(updateError.message); setLoading(false); return; }
     setSuccess(`Connected to ${data.players.first_name} ${data.players.last_name}!`);
     setCode(''); setLoading(false);
     setTimeout(() => window.location.href = '/dashboard', 1500);
