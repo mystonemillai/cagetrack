@@ -308,8 +308,7 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* Sign Out */}
-          <button onClick={handleSignOut} className="w-full p-4 rounded-xl border border-red-500/20 text-red-400/60 hover:text-red-400 hover:border-red-500/40 transition-all text-sm">Sign Out</button>
+          
 
           {/* Subscription - at bottom, not for coaches */}
           {!isCoach && (
@@ -318,6 +317,8 @@ export default function SettingsPage() {
               <SubscriptionSection players={players} />
             </div>
           )}
+          {/* Sign Out */}
+          <button onClick={handleSignOut} className="w-full p-4 rounded-xl border border-red-500/20 text-red-400/60 hover:text-red-400 hover:border-red-500/40 transition-all text-sm">Sign Out</button>
         </div>
       </main>
 
