@@ -51,7 +51,11 @@ export default async function PublicCoachProfile({ params }: { params: { id: str
           )}
           <h1 className="font-display text-3xl sm:text-4xl mb-1">{coach.display_name}</h1>
           <div className="flex flex-wrap gap-2 justify-center mt-3">
-            {coach.specialty && <span className="text-xs text-wheat bg-wheat/10 px-3 py-1 rounded-full">{coach.specialty}</span>}
+            {coach.specialties && coach.specialties.length > 0 ? (
+              coach.specialties.map((s: string) => <span key={s} className="text-xs text-wheat bg-wheat/10 px-3 py-1 rounded-full">{s}</span>)
+            ) : coach.specialty ? (
+              <span className="text-xs text-wheat bg-wheat/10 px-3 py-1 rounded-full">{coach.specialty}</span>
+            ) : null}
             {coach.coach_type && <span className="text-xs text-offwhite/40 bg-offwhite/5 px-3 py-1 rounded-full capitalize">{coach.coach_type.replace(/_/g, ' ')}</span>}
             {coach.sports && coach.sports.map((s: string) => (
               <span key={s} className="text-xs text-offwhite/40 bg-offwhite/5 px-3 py-1 rounded-full">{s}</span>
