@@ -18,6 +18,11 @@ export default function CoachDirectoryPage() {
   const [searchState, setSearchState] = useState('');
   const [searchSport, setSearchSport] = useState('All');
   const [searchSpecialty, setSearchSpecialty] = useState('All');
+  const [expandedCoach, setExpandedCoach] = useState<string | null>(null);
+  const [players, setPlayers] = useState<any[]>([]);
+  const [connecting, setConnecting] = useState<string | null>(null);
+  const [connectSuccess, setConnectSuccess] = useState<string | null>(null);
+  const [connectError, setConnectError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -27,6 +32,17 @@ export default function CoachDirectoryPage() {
       const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
       if (profile?.city) setSearchCity(profile.city);
       if (profile?.state) setSearchState(profile.state);
+
+      // Load user's players for connecting
+      const { data: pl } = await supabase.from('players').select('*').eq('owner_user_id', user.id);
+      const { data: linked } = await supabase.from('parent_links').select('player_id').eq('parent_user_id', user.id).eq('status', 'active');
+      let allPlayers = pl || [];
+      if (linked && linked.length > 0) {
+        const linkedIds = linked.map((lp: any) => lp.player_id);
+        const { data: lp } = await supabase.from('players').select('*').in('id', linkedIds);
+        if (lp) allPlayers = [...allPlayers, ...lp];
+      }
+      setPlayers(allPlayers);
 
       const { data: coachData } = await supabase
         .from('coach_profiles')
@@ -49,6 +65,37 @@ export default function CoachDirectoryPage() {
     if (searchSpecialty !== 'All') results = results.filter(c => (c.specialties && c.specialties.includes(searchSpecialty)) || c.specialty === searchSpecialty);
     setFilteredCoaches(results);
   }, [searchCity, searchState, searchSport, searchSpecialty, coaches]);
+
+  async function handleConnect(coachId: string) {
+    if (players.length === 0) {
+      setConnectError('Create a player profile first before connecting with a coach.');
+      return;
+    }
+    setConnecting(coachId);
+    setConnectError(null);
+
+    const { error } = await supabase.from('player_coaches').insert({
+      player_id: players[0].id,
+      coach_profile_id: coachId,
+      status: 'active',
+      invite_code: 'DIR-' + Math.random().toString(36).substring(2, 7).toUpperCase(),
+      connected_at: new Date().toISOString(),
+    });
+
+    if (error) {
+      if (error.message.includes('duplicate')) {
+        setConnectSuccess(coachId);
+        setConnectError(null);
+      } else {
+        setConnectError(error.message);
+      }
+      setConnecting(null);
+      return;
+    }
+
+    setConnectSuccess(coachId);
+    setConnecting(null);
+  }
 
   if (loading) {
     return (<div className="min-h-screen flex items-center justify-center"><div className="text-wheat font-display text-xl animate-pulse">Loading...</div></div>);
@@ -78,7 +125,6 @@ export default function CoachDirectoryPage() {
             <input type="text" value={searchCity} onChange={(e) => setSearchCity(e.target.value)} className="col-span-3 p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors" placeholder="City" />
             <input type="text" value={searchState} onChange={(e) => setSearchState(e.target.value)} maxLength={2} className="col-span-2 p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors uppercase" placeholder="State (IL)" />
           </div>
-
           <div>
             <label className="block text-xs uppercase tracking-widest text-offwhite/40 mb-2">Sport</label>
             <div className="flex gap-2">
@@ -87,7 +133,6 @@ export default function CoachDirectoryPage() {
               ))}
             </div>
           </div>
-
           <div>
             <label className="block text-xs uppercase tracking-widest text-offwhite/40 mb-2">Specialty</label>
             <div className="flex flex-wrap gap-2">
@@ -106,6 +151,10 @@ export default function CoachDirectoryPage() {
           )}
         </div>
 
+        {connectError && (
+          <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">{connectError}</div>
+        )}
+
         {/* Results */}
         {filteredCoaches.length === 0 ? (
           <div className="rounded-xl bg-navy-light border border-wheat/8 p-8 text-center">
@@ -118,37 +167,57 @@ export default function CoachDirectoryPage() {
         ) : (
           <div className="space-y-3">
             {filteredCoaches.map((coach) => (
-              <Link key={coach.id} href={`/coach/${coach.id}`} className="block rounded-xl bg-navy-light border border-wheat/8 p-5 hover:border-wheat/20 transition-all card-hover">
-                <div className="flex items-start gap-4">
-                  {coach.profiles?.avatar_url ? (
-                    <img src={coach.profiles.avatar_url} alt={coach.display_name} className="w-16 h-16 rounded-full object-cover border-2 border-wheat/20 flex-shrink-0" />
-                  ) : (
-                    <div className="w-16 h-16 rounded-full bg-wheat/10 flex items-center justify-center flex-shrink-0 text-2xl">🧢</div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-display text-lg tracking-wide text-wheat">{coach.display_name}</h3>
-                    <div className="flex flex-wrap gap-1.5 mt-1.5">
-                      {coach.specialties && coach.specialties.length > 0 ? (
-                        coach.specialties.map((s: string) => <span key={s} className="text-[10px] text-wheat bg-wheat/10 px-2 py-0.5 rounded">{s}</span>)
-                      ) : coach.specialty ? (
-                        <span className="text-[10px] text-wheat bg-wheat/10 px-2 py-0.5 rounded">{coach.specialty}</span>
-                      ) : null}
-                      {coach.coach_type && (
-                        <span className="text-[10px] text-offwhite/30 bg-offwhite/5 px-2 py-0.5 rounded capitalize">{coach.coach_type.replace(/_/g, ' ')}</span>
+              <div key={coach.id} className="rounded-xl bg-navy-light border border-wheat/8 hover:border-wheat/15 transition-all card-hover">
+                <div className="p-5 cursor-pointer" onClick={() => setExpandedCoach(expandedCoach === coach.id ? null : coach.id)}>
+                  <div className="flex items-start gap-4">
+                    {coach.profiles?.avatar_url ? (
+                      <img src={coach.profiles.avatar_url} alt={coach.display_name} className="w-16 h-16 rounded-full object-cover border-2 border-wheat/20 flex-shrink-0" />
+                    ) : (
+                      <div className="w-16 h-16 rounded-full bg-wheat/10 flex items-center justify-center flex-shrink-0 text-2xl">🧢</div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between">
+                        <h3 className="font-display text-lg tracking-wide text-wheat">{coach.display_name}</h3>
+                        <span className={`text-offwhite/20 text-xs transition-transform ${expandedCoach === coach.id ? 'rotate-90' : ''}`}>→</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 mt-1.5">
+                        {coach.specialties && coach.specialties.length > 0 ? (
+                          coach.specialties.map((s: string) => <span key={s} className="text-[10px] text-wheat bg-wheat/10 px-2 py-0.5 rounded">{s}</span>)
+                        ) : coach.specialty ? (
+                          <span className="text-[10px] text-wheat bg-wheat/10 px-2 py-0.5 rounded">{coach.specialty}</span>
+                        ) : null}
+                        {coach.sports && coach.sports.map((s: string) => (
+                          <span key={s} className="text-[10px] text-offwhite/30 bg-offwhite/5 px-2 py-0.5 rounded">{s}</span>
+                        ))}
+                      </div>
+                      {coach.city && coach.state && (
+                        <p className="text-xs text-offwhite/30 mt-2">{coach.city}, {coach.state} {coach.service_radius_miles ? `· ${coach.service_radius_miles} mi radius` : ''}</p>
                       )}
-                      {coach.sports && coach.sports.map((s: string) => (
-                        <span key={s} className="text-[10px] text-offwhite/30 bg-offwhite/5 px-2 py-0.5 rounded">{s}</span>
-                      ))}
                     </div>
-                    {coach.city && coach.state && (
-                      <p className="text-xs text-offwhite/30 mt-2">{coach.city}, {coach.state} {coach.service_radius_miles ? `· ${coach.service_radius_miles} mi radius` : ''}</p>
-                    )}
-                    {coach.bio && (
-                      <p className="text-xs text-offwhite/40 mt-2 line-clamp-2">{coach.bio}</p>
-                    )}
                   </div>
                 </div>
-              </Link>
+
+                {/* Expanded details */}
+                {expandedCoach === coach.id && (
+                  <div className="px-5 pb-5 border-t border-wheat/5 pt-4 animate-fade-in">
+                    {coach.bio && (
+                      <p className="text-sm text-offwhite/50 leading-relaxed mb-4">{coach.bio}</p>
+                    )}
+                    {coach.video_intro_url && (
+                      <a href={coach.video_intro_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-wheat hover:underline mb-4">▶ Watch Intro Video</a>
+                    )}
+                    <div className="flex gap-3">
+                      {connectSuccess === coach.id ? (
+                        <span className="px-6 py-2.5 bg-green-500/10 text-green-400 text-sm font-display tracking-wider rounded-lg">Connected!</span>
+                      ) : (
+                        <button onClick={() => handleConnect(coach.id)} disabled={connecting === coach.id} className="px-6 py-2.5 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors disabled:opacity-50">
+                          {connecting === coach.id ? 'Connecting...' : 'Connect with ' + coach.display_name}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         )}
