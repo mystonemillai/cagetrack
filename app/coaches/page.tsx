@@ -18,7 +18,6 @@ export default function CoachDirectoryPage() {
   const [searchState, setSearchState] = useState('');
   const [searchSport, setSearchSport] = useState('All');
   const [searchSpecialty, setSearchSpecialty] = useState('All');
-  const [userProfile, setUserProfile] = useState<any>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -26,13 +25,9 @@ export default function CoachDirectoryPage() {
       if (!user) { router.push('/auth/login'); return; }
 
       const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-      setUserProfile(profile);
-
-      // Pre-fill location from user profile
       if (profile?.city) setSearchCity(profile.city);
       if (profile?.state) setSearchState(profile.state);
 
-      // Load all searchable coaches
       const { data: coachData } = await supabase
         .from('coach_profiles')
         .select('*, profiles(name, email, avatar_url)')
@@ -48,23 +43,10 @@ export default function CoachDirectoryPage() {
 
   useEffect(() => {
     let results = [...coaches];
-
-    if (searchState) {
-      results = results.filter(c => c.state && c.state.toLowerCase() === searchState.toLowerCase());
-    }
-
-    if (searchCity) {
-      results = results.filter(c => c.city && c.city.toLowerCase().includes(searchCity.toLowerCase()));
-    }
-
-    if (searchSport !== 'All') {
-      results = results.filter(c => c.sports && c.sports.includes(searchSport));
-    }
-
-    if (searchSpecialty !== 'All') {
-      results = results.filter(c => (c.specialties && c.specialties.includes(searchSpecialty)) || c.specialty === searchSpecialty);
-    }
-
+    if (searchState) results = results.filter(c => c.state && c.state.toLowerCase() === searchState.toLowerCase());
+    if (searchCity) results = results.filter(c => c.city && c.city.toLowerCase().includes(searchCity.toLowerCase()));
+    if (searchSport !== 'All') results = results.filter(c => c.sports && c.sports.includes(searchSport));
+    if (searchSpecialty !== 'All') results = results.filter(c => (c.specialties && c.specialties.includes(searchSpecialty)) || c.specialty === searchSpecialty);
     setFilteredCoaches(results);
   }, [searchCity, searchState, searchSport, searchSpecialty, coaches]);
 
@@ -73,7 +55,7 @@ export default function CoachDirectoryPage() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-texture">
       <nav className="fixed top-0 w-full z-50 px-4 py-3 bg-navy/90 backdrop-blur-xl border-b border-wheat/8">
         <div className="max-w-5xl mx-auto flex justify-between items-center">
           <Link href="/dashboard" className="flex items-center gap-2">
@@ -85,11 +67,13 @@ export default function CoachDirectoryPage() {
       </nav>
 
       <main className="pt-20 pb-24 px-4 max-w-3xl mx-auto">
-        <h1 className="font-display text-3xl sm:text-4xl mb-2">Find a Coach</h1>
-        <p className="text-offwhite/40 mb-6">Search for coaches in your area by sport and specialty.</p>
+        <div className="mb-6 animate-fade-in">
+          <h1 className="font-display text-4xl sm:text-5xl mb-2">Find a Coach</h1>
+          <p className="text-offwhite/40">Search for coaches in your area by sport and specialty.</p>
+        </div>
 
-        {/* Search Filters */}
-        <div className="rounded-xl bg-navy-light border border-wheat/8 p-5 mb-6 space-y-4">
+        {/* Filters */}
+        <div className="rounded-xl bg-navy-light border border-wheat/8 p-5 mb-6 space-y-4 animate-fade-in-delay-1">
           <div className="grid grid-cols-5 gap-3">
             <input type="text" value={searchCity} onChange={(e) => setSearchCity(e.target.value)} className="col-span-3 p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors" placeholder="City" />
             <input type="text" value={searchState} onChange={(e) => setSearchState(e.target.value)} maxLength={2} className="col-span-2 p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors uppercase" placeholder="State (IL)" />
@@ -99,7 +83,7 @@ export default function CoachDirectoryPage() {
             <label className="block text-xs uppercase tracking-widest text-offwhite/40 mb-2">Sport</label>
             <div className="flex gap-2">
               {['All', 'Baseball', 'Softball'].map((s) => (
-                <button key={s} onClick={() => setSearchSport(s)} className={`px-4 py-1.5 rounded-md text-xs font-medium transition-all ${searchSport === s ? 'bg-wheat text-navy' : 'bg-navy border border-wheat/10 text-offwhite/50 hover:border-wheat/25'}`}>{s}</button>
+                <button key={s} onClick={() => setSearchSport(s)} className={`px-4 py-2 rounded-lg text-xs font-medium transition-all ${searchSport === s ? 'bg-wheat text-navy' : 'bg-navy border border-wheat/10 text-offwhite/50 hover:border-wheat/25'}`}>{s}</button>
               ))}
             </div>
           </div>
@@ -108,20 +92,21 @@ export default function CoachDirectoryPage() {
             <label className="block text-xs uppercase tracking-widest text-offwhite/40 mb-2">Specialty</label>
             <div className="flex flex-wrap gap-2">
               {SPECIALTIES.map((s) => (
-                <button key={s} onClick={() => setSearchSpecialty(s)} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${searchSpecialty === s ? 'bg-wheat text-navy' : 'bg-navy border border-wheat/10 text-offwhite/50 hover:border-wheat/25'}`}>{s}</button>
+                <button key={s} onClick={() => setSearchSpecialty(s)} className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${searchSpecialty === s ? 'bg-wheat text-navy' : 'bg-navy border border-wheat/10 text-offwhite/50 hover:border-wheat/25'}`}>{s}</button>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Results */}
+        {/* Results header */}
         <div className="mb-3 flex justify-between items-center">
           <span className="text-xs text-offwhite/40">{filteredCoaches.length} coach{filteredCoaches.length !== 1 ? 'es' : ''} found</span>
-          {(searchCity || searchState !== '' || searchSport !== 'All' || searchSpecialty !== 'All') && (
+          {(searchCity || searchState || searchSport !== 'All' || searchSpecialty !== 'All') && (
             <button onClick={() => { setSearchCity(''); setSearchState(''); setSearchSport('All'); setSearchSpecialty('All'); }} className="text-xs text-wheat hover:underline">Clear filters</button>
           )}
         </div>
 
+        {/* Results */}
         {filteredCoaches.length === 0 ? (
           <div className="rounded-xl bg-navy-light border border-wheat/8 p-8 text-center">
             <div className="w-14 h-14 rounded-xl bg-wheat/10 flex items-center justify-center mx-auto mb-4 text-2xl">🧢</div>
@@ -133,16 +118,16 @@ export default function CoachDirectoryPage() {
         ) : (
           <div className="space-y-3">
             {filteredCoaches.map((coach) => (
-              <div key={coach.id} className="rounded-xl bg-navy-light border border-wheat/8 p-5 hover:border-wheat/20 transition-all">
+              <Link key={coach.id} href={`/coach/${coach.id}`} className="block rounded-xl bg-navy-light border border-wheat/8 p-5 hover:border-wheat/20 transition-all card-hover">
                 <div className="flex items-start gap-4">
                   {coach.profiles?.avatar_url ? (
-                    <img src={coach.profiles.avatar_url} alt={coach.display_name} className="w-14 h-14 rounded-full object-cover border border-wheat/20 flex-shrink-0" />
+                    <img src={coach.profiles.avatar_url} alt={coach.display_name} className="w-16 h-16 rounded-full object-cover border-2 border-wheat/20 flex-shrink-0" />
                   ) : (
-                    <div className="w-14 h-14 rounded-full bg-wheat/10 flex items-center justify-center flex-shrink-0 text-xl">🧢</div>
+                    <div className="w-16 h-16 rounded-full bg-wheat/10 flex items-center justify-center flex-shrink-0 text-2xl">🧢</div>
                   )}
                   <div className="flex-1 min-w-0">
                     <h3 className="font-display text-lg tracking-wide text-wheat">{coach.display_name}</h3>
-                    <div className="flex flex-wrap gap-2 mt-1.5">
+                    <div className="flex flex-wrap gap-1.5 mt-1.5">
                       {coach.specialties && coach.specialties.length > 0 ? (
                         coach.specialties.map((s: string) => <span key={s} className="text-[10px] text-wheat bg-wheat/10 px-2 py-0.5 rounded">{s}</span>)
                       ) : coach.specialty ? (
@@ -156,19 +141,14 @@ export default function CoachDirectoryPage() {
                       ))}
                     </div>
                     {coach.city && coach.state && (
-                      <p className="text-xs text-offwhite/30 mt-1.5">{coach.city}, {coach.state} {coach.service_radius_miles ? `· ${coach.service_radius_miles} mi radius` : ''}</p>
+                      <p className="text-xs text-offwhite/30 mt-2">{coach.city}, {coach.state} {coach.service_radius_miles ? `· ${coach.service_radius_miles} mi radius` : ''}</p>
                     )}
                     {coach.bio && (
                       <p className="text-xs text-offwhite/40 mt-2 line-clamp-2">{coach.bio}</p>
                     )}
                   </div>
-                  {coach.video_intro_url && (
-                    <a href={coach.video_intro_url} target="_blank" rel="noopener noreferrer" className="flex-shrink-0 ml-3 px-3 py-1.5 bg-wheat/10 border border-wheat/20 text-wheat text-xs rounded-md hover:bg-wheat/20 transition-colors">
-                      Watch Intro
-                    </a>
-                  )}
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}
