@@ -72,7 +72,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
         if (cp) {
           const { data: connected } = await supabase.from('player_coaches').select('*, players(*)').eq('coach_profile_id', cp.id).eq('status', 'active');
           setConnectedPlayers(connected || []);
-          const { data: pending } = await supabase.from('player_coaches').select('*, players(first_name, last_name, age_group, sport)').eq('coach_profile_id', cp.id).eq('status', 'pending_approval');
+          const { data: pending } = await supabase.from('player_coaches').select('*, players(first_name, last_name, age_group, sport)').eq('coach_profile_id', cp.id).eq('status', 'pending_approval').order('created_at', { ascending: false });
           setPendingRequests(pending || []);
         }
       }
@@ -426,22 +426,26 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
             )}
             {pendingRequests.length > 0 && (
               <div className="mb-6">
-                <h2 className="font-display text-xl text-wheat mb-3">Connection Requests</h2>
+                <h2 className="font-display text-xl text-wheat mb-3">Connection Requests ({pendingRequests.length})</h2>
                 <div className="space-y-3">
                   {pendingRequests.map((req) => (
                     <div key={req.id} className="rounded-xl bg-wheat/5 border border-wheat/15 p-5">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-display text-lg tracking-wide">{req.players?.first_name} {req.players?.last_name}</h3>
-                          <div className="flex gap-2 mt-1">
-                            {req.players?.age_group && <span className="text-xs text-wheat bg-wheat/10 px-2 py-0.5 rounded">{req.players.age_group}</span>}
-                            {req.players?.sport && <span className="text-xs text-offwhite/30 bg-offwhite/5 px-2 py-0.5 rounded">{req.players.sport}</span>}
-                          </div>
+                      <div className="mb-3">
+                        <h3 className="font-display text-lg tracking-wide">{req.players?.first_name} {req.players?.last_name}</h3>
+                        <div className="flex gap-2 mt-1">
+                          {req.players?.age_group && <span className="text-xs text-wheat bg-wheat/10 px-2 py-0.5 rounded">{req.players.age_group}</span>}
+                          {req.players?.sport && <span className="text-xs text-offwhite/30 bg-offwhite/5 px-2 py-0.5 rounded">{req.players.sport}</span>}
                         </div>
-                        <div className="flex gap-2">
-                          <button onClick={() => handleApproveRequest(req.id)} className="px-4 py-2 bg-wheat text-navy text-xs font-display tracking-wider rounded-lg hover:bg-wheat/90">Approve</button>
-                          <button onClick={() => handleDenyRequest(req.id)} className="px-4 py-2 bg-offwhite/5 border border-offwhite/10 text-offwhite/40 text-xs font-display tracking-wider rounded-lg hover:text-red-400 hover:border-red-400/20">Deny</button>
+                        {req.requested_by_name && <p className="text-xs text-offwhite/40 mt-2">Requested by {req.requested_by_name}</p>}
+                      </div>
+                      {req.request_message && (
+                        <div className="p-3 bg-navy rounded-lg border border-wheat/8 mb-3">
+                          <p className="text-sm text-offwhite/60 italic">{req.request_message}</p>
                         </div>
+                      )}
+                      <div className="flex gap-2">
+                        <button onClick={() => handleApproveRequest(req.id)} className="px-5 py-2 bg-wheat text-navy text-xs font-display tracking-wider rounded-lg hover:bg-wheat/90">Approve</button>
+                        <button onClick={() => handleDenyRequest(req.id)} className="px-5 py-2 bg-offwhite/5 border border-offwhite/10 text-offwhite/40 text-xs font-display tracking-wider rounded-lg hover:text-red-400 hover:border-red-400/20">Deny</button>
                       </div>
                     </div>
                   ))}
