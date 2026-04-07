@@ -143,9 +143,11 @@ export default function CoachDirectoryPage() {
                   <div className="flex-1 min-w-0">
                     <h3 className="font-display text-lg tracking-wide text-wheat">{coach.display_name}</h3>
                     <div className="flex flex-wrap gap-2 mt-1.5">
-                      {coach.specialty && (
+                      {coach.specialties && coach.specialties.length > 0 ? (
+                        coach.specialties.map((s: string) => <span key={s} className="text-[10px] text-wheat bg-wheat/10 px-2 py-0.5 rounded">{s}</span>)
+                      ) : coach.specialty ? (
                         <span className="text-[10px] text-wheat bg-wheat/10 px-2 py-0.5 rounded">{coach.specialty}</span>
-                      )}
+                      ) : null}
                       {coach.coach_type && (
                         <span className="text-[10px] text-offwhite/30 bg-offwhite/5 px-2 py-0.5 rounded capitalize">{coach.coach_type.replace(/_/g, ' ')}</span>
                       )}
