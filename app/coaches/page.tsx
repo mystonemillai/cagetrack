@@ -23,6 +23,7 @@ export default function CoachDirectoryPage() {
   const [connecting, setConnecting] = useState<string | null>(null);
   const [connectSuccess, setConnectSuccess] = useState<string | null>(null);
   const [connectError, setConnectError] = useState<string | null>(null);
+  const [hasSubscription, setHasSubscription] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -43,6 +44,8 @@ export default function CoachDirectoryPage() {
         if (lp) allPlayers = [...allPlayers, ...lp];
       }
       setPlayers(allPlayers);
+      const { data: sub } = await supabase.from('subscriptions').select('id').eq('billing_user_id', user.id).eq('status', 'active').single();
+      setHasSubscription(!!sub);
 
       const { data: coachData } = await supabase
         .from('coach_profiles')
@@ -67,6 +70,12 @@ export default function CoachDirectoryPage() {
   }, [searchCity, searchState, searchSport, searchSpecialty, coaches]);
 
   async function handleConnect(coachId: string) {
+    if (!hasSubscription) {
+      setConnectError(null);
+      setExpandedCoach(null);
+      router.push('/settings');
+      return;
+    }
     if (players.length === 0) {
       setConnectError('Create a player profile first before connecting with a coach.');
       return;
