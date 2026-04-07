@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase-browser';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-const SPECIALTIES = ['All', 'Hitting', 'Pitching', 'Catching', 'Fielding', 'Baserunning', 'Mental Game', 'Strength & Conditioning', 'General'];
+const SPECIALTIES = ['All', 'Hitting', 'Pitching', 'Catching', 'Infield', 'Outfield', '1st Base', '3rd Base', 'Middle Infield', 'Baserunning', 'Fielding', 'Mental Game', 'Strength & Conditioning', 'General'];
 
 export default function CoachDirectoryPage() {
   const supabase = createClient();
