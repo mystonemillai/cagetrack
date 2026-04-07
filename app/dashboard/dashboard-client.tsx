@@ -95,6 +95,9 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
 
         const { data: newMsgs } = await supabase.from('messages').select('*, players(first_name)').in('player_id', playerIds).gt('created_at', lastSeen).neq('sender_user_id', userId).order('created_at', { ascending: false }).limit(10);
         if (newMsgs) newMsgs.forEach(m => notifs.push({ type: 'message', text: `${m.sender_name || 'Someone'} sent a message on ${m.players?.first_name || 'your player'}'s profile`, date: m.created_at }));
+        // Check for newly approved connections
+        const { data: newConnections } = await supabase.from('player_coaches').select('*, coach_profiles(display_name)').in('player_id', playerIds).eq('status', 'active').gt('connected_at', lastSeen);
+        if (newConnections) newConnections.forEach(c => notifs.push({ type: 'connection', text: `${c.coach_profiles?.display_name || 'A coach'} accepted your connection request!`, date: c.connected_at }));
 
         notifs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         setNotifications(notifs);
@@ -305,7 +308,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
             <div className="space-y-2">
               {notifications.slice(0, 5).map((n, i) => (
                 <div key={i} className="flex items-start gap-2">
-                  <span className="text-xs mt-0.5">{n.type === 'observation' ? '👁️' : n.type === 'drill' ? '📋' : n.type === 'ai' ? '🧠' : '💬'}</span>
+                  <span className="text-xs mt-0.5">{n.type === 'observation' ? '👁️' : n.type === 'drill' ? '📋' : n.type === 'ai' ? '🧠' : n.type === 'connection' ? '🤝' : '💬'}</span>
                   <span className="text-xs text-offwhite/60">{n.text}</span>
                 </div>
               ))}
