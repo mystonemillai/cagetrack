@@ -62,7 +62,7 @@ export default function CoachDirectoryPage() {
     }
 
     if (searchSpecialty !== 'All') {
-      results = results.filter(c => c.specialty === searchSpecialty);
+      results = results.filter(c => (c.specialties && c.specialties.includes(searchSpecialty)) || c.specialty === searchSpecialty);
     }
 
     setFilteredCoaches(results);
