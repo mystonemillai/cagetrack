@@ -163,6 +163,13 @@ export default function PlayerDetailPage() {
   async function handleGenerateAiPlan(e: React.FormEvent) {
     e.preventDefault();
     if (!coachProfile || !aiInput) return;
+    // Rate limit: max 10 plans per player per month
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { count } = await supabase.from('ai_plans').select('*', { count: 'exact', head: true }).eq('player_id', playerId).gt('created_at', thirtyDaysAgo);
+    if (count && count >= 10) {
+      setAiError('Limit reached — 10 custom plans per player per month.');
+      return;
+    }
     setAiError(''); setAiGenerating(true);
 
     try {
