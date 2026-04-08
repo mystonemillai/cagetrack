@@ -143,6 +143,13 @@ export default function SettingsPage() {
           setLinkLoading(false);
           return;
         }
+        // Check subscription
+        const { data: sub } = await supabase.from('subscriptions').select('id').eq('billing_user_id', user.id).eq('status', 'active').single();
+        if (!sub) {
+          setLinkError('Upgrade to a paid plan to connect with coaches.');
+          setLinkLoading(false);
+          return;
+        }
         const { error: updateError } = await supabase.from('player_coaches').update({
           player_id: players[0].id, status: 'active', connected_at: new Date().toISOString(),
         }).eq('id', invite.id);
