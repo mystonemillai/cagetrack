@@ -357,10 +357,10 @@ export default function PlayerDetailPage() {
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <button onClick={() => setActiveTab('messages')} className="text-[10px] text-wheat hover:underline">Message</button>
+                      <div className="flex flex-col items-end gap-2">
+                        <button onClick={() => setActiveTab('messages')} className="text-xs text-wheat hover:underline">Message</button>
                         {!isCoach && (
-                          <button onClick={() => handleDisconnectCoach(pc.id)} className="text-[10px] text-offwhite/20 hover:text-red-400 transition-colors">Disconnect</button>
+                          <button onClick={() => handleDisconnectCoach(pc.id)} className="text-xs text-offwhite/20 hover:text-red-400 transition-colors">Disconnect</button>
                         )}
                       </div>
                     </div>
