@@ -347,8 +347,8 @@ export default function PlayerDetailPage() {
                           <div className="w-10 h-10 rounded-full bg-wheat/10 flex items-center justify-center text-lg">🧢</div>
                         )}
                         <div>
-                          <div className="text-sm font-medium">{pc.coach_profiles?.display_name || 'Coach'}</div>
-                          <div className="flex gap-1 mt-0.5">
+                          <div className="text-sm font-medium truncate">{pc.coach_profiles?.display_name || 'Coach'}</div>
+                          <div className="flex flex-wrap gap-1 mt-0.5">
                             {pc.coach_profiles?.specialties ? pc.coach_profiles.specialties.map((s: string) => (
                               <span key={s} className="text-[9px] text-offwhite/30 bg-offwhite/5 px-1.5 py-0.5 rounded">{s}</span>
                             )) : pc.coach_profiles?.specialty && (
