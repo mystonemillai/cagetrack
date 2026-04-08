@@ -30,8 +30,7 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const publicPaths = ['/', '/auth/login', '/auth/signup', '/auth/claim-profile', '/auth/callback', '/auth/forgot-password', '/auth/reset-password'];
-  const isPublicPath = publicPaths.some(path => request.nextUrl.pathname === path) || request.nextUrl.pathname.startsWith('/coach/') || request.nextUrl.pathname.startsWith('/blog') || request.nextUrl.pathname.startsWith('/terms') || request.nextUrl.pathname.startsWith('/privacy') || request.nextUrl.pathname.startsWith('/help');
-
+const isPublicPath = publicPaths.some(path => request.nextUrl.pathname === path) || request.nextUrl.pathname.startsWith('/coach/') || request.nextUrl.pathname.startsWith('/blog') || request.nextUrl.pathname.startsWith('/terms') || request.nextUrl.pathname.startsWith('/privacy') || request.nextUrl.pathname.startsWith('/help') || request.nextUrl.pathname.endsWith('.png') || request.nextUrl.pathname.endsWith('.json') || request.nextUrl.pathname.endsWith('.ico');
   if (!user && !isPublicPath) {
     const url = request.nextUrl.clone();
     url.pathname = '/auth/login';
