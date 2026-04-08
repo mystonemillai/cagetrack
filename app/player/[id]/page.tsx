@@ -44,6 +44,7 @@ export default function PlayerDetailPage() {
   const [drillSource, setDrillSource] = useState('master');
   const [myDrills, setMyDrills] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
+  const [playerCoaches, setPlayerCoaches] = useState<any[]>([]);
   const [msgText, setMsgText] = useState('');
   const [msgSending, setMsgSending] = useState(false);
 
@@ -75,6 +76,9 @@ export default function PlayerDetailPage() {
 
       const { data: plans } = await supabase.from('ai_plans').select('*, coach_profiles(display_name)').eq('player_id', playerId).order('created_at', { ascending: false });
       setAiPlans(plans || []);
+
+      const { data: pCoaches } = await supabase.from('player_coaches').select('*, coach_profiles(id, display_name, specialty, specialties, profiles(avatar_url))').eq('player_id', playerId).eq('status', 'active');
+      setPlayerCoaches(pCoaches || []);
 
       const { data: msgs } = await supabase.from('messages').select('*').eq('player_id', playerId).order('created_at', { ascending: true });
       setMessages(msgs || []);
@@ -192,7 +196,11 @@ export default function PlayerDetailPage() {
       setAiGenerating(false);
     }
   }
-
+async function handleDisconnectCoach(connectionId: string) {
+    if (!confirm('Disconnect from this coach?')) return;
+    await supabase.from('player_coaches').delete().eq('id', connectionId);
+    window.location.reload();
+  }
   async function handleSendMessage(e: React.FormEvent) {
     e.preventDefault();
     if (!msgText.trim() || !profile) return;
@@ -302,6 +310,38 @@ export default function PlayerDetailPage() {
                 </div>
               )}
             </div>
+            {/* Connected Coaches */}
+            {playerCoaches.length > 0 && (
+              <div className="rounded-xl bg-navy-light border border-wheat/8 p-6">
+                <h2 className="font-display text-lg text-wheat mb-3">Connected Coaches</h2>
+                <div className="space-y-3">
+                  {playerCoaches.map((pc) => (
+                    <div key={pc.id} className="flex items-center justify-between py-2 border-b border-wheat/5 last:border-0">
+                      <div className="flex items-center gap-3">
+                        {pc.coach_profiles?.profiles?.avatar_url ? (
+                          <img src={pc.coach_profiles.profiles.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover border border-wheat/20" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-wheat/10 flex items-center justify-center text-lg">🧢</div>
+                        )}
+                        <div>
+                          <div className="text-sm font-medium">{pc.coach_profiles?.display_name || 'Coach'}</div>
+                          <div className="flex gap-1 mt-0.5">
+                            {pc.coach_profiles?.specialties ? pc.coach_profiles.specialties.map((s: string) => (
+                              <span key={s} className="text-[9px] text-offwhite/30 bg-offwhite/5 px-1.5 py-0.5 rounded">{s}</span>
+                            )) : pc.coach_profiles?.specialty && (
+                              <span className="text-[9px] text-offwhite/30 bg-offwhite/5 px-1.5 py-0.5 rounded">{pc.coach_profiles.specialty}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      {!isCoach && (
+                        <button onClick={() => handleDisconnectCoach(pc.id)} className="text-[10px] text-offwhite/20 hover:text-red-400 transition-colors">Disconnect</button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {isCoach && (
               <div className="grid grid-cols-3 gap-3">
