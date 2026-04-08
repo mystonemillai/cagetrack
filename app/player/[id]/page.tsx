@@ -272,6 +272,19 @@ export default function PlayerDetailPage() {
 
         {activeTab === 'overview' && (
           <div className="space-y-4">
+            {isCoach && (
+              <div className="grid grid-cols-3 gap-3">
+                <button onClick={() => setActiveTab('observations')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
+                  <div className="text-xl mb-1">👁️</div><div className="text-[10px] text-offwhite/50">Add Observation</div>
+                </button>
+                <button onClick={() => setActiveTab('drills')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
+                  <div className="text-xl mb-1">📋</div><div className="text-[10px] text-offwhite/50">Assign Drill</div>
+                </button>
+                <button onClick={() => setActiveTab('ai-plans')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
+                  <div className="text-xl mb-1">🧠</div><div className="text-[10px] text-offwhite/50">Custom Plan</div>
+                </button>
+              </div>
+            )}
             <div className="grid grid-cols-3 gap-3">
               <button onClick={() => setActiveTab('observations')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
                 <div className="font-display text-2xl text-wheat">{observations.length}</div>
@@ -349,19 +362,7 @@ export default function PlayerDetailPage() {
               </div>
             )}
 
-            {isCoach && (
-              <div className="grid grid-cols-3 gap-3">
-                <button onClick={() => setActiveTab('observations')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
-                  <div className="text-xl mb-1">👁️</div><div className="text-[10px] text-offwhite/50">Add Observation</div>
-                </button>
-                <button onClick={() => setActiveTab('drills')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
-                  <div className="text-xl mb-1">📋</div><div className="text-[10px] text-offwhite/50">Assign Drill</div>
-                </button>
-                <button onClick={() => setActiveTab('ai-plans')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
-                  <div className="text-xl mb-1">🧠</div><div className="text-[10px] text-offwhite/50">Custom Plan</div>
-                </button>
-              </div>
-            )}
+            
           </div>
         )}
 
