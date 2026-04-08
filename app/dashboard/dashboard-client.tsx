@@ -91,7 +91,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
         if (newDrills) newDrills.forEach(d => notifs.push({ type: 'drill', text: `${d.coach_profiles?.display_name || 'A coach'} assigned "${d.master_drills?.drill_name || d.coach_drills?.drill_name || 'a drill'}" to ${d.players?.first_name || 'your player'}`, date: d.assigned_at }));
 
         const { data: newPlans } = await supabase.from('ai_plans').select('*, coach_profiles(display_name), players(first_name)').in('player_id', playerIds).gt('created_at', lastSeen).order('created_at', { ascending: false }).limit(5);
-        if (newPlans) newPlans.forEach(p => notifs.push({ type: 'ai', text: `${p.coach_profiles?.display_name || 'A coach'} created an AI plan for ${p.players?.first_name || 'your player'}`, date: p.created_at }));
+        if (newPlans) newPlans.forEach(p => notifs.push({ type: 'ai', text: `${p.coach_profiles?.display_name || 'A coach'} created a custom plan for ${p.players?.first_name || 'your player'}`, date: p.created_at }));
 
         const { data: newMsgs } = await supabase.from('messages').select('*, players(first_name)').in('player_id', playerIds).gt('created_at', lastSeen).neq('sender_user_id', userId).order('created_at', { ascending: false }).limit(10);
         if (newMsgs) newMsgs.forEach(m => notifs.push({ type: 'message', text: `${m.sender_name || 'Someone'} sent a message on ${m.players?.first_name || 'your player'}'s profile`, date: m.created_at }));
@@ -341,7 +341,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-sm font-semibold text-wheat">Upgrade to unlock all features</div>
-                <div className="text-xs text-offwhite/40 mt-0.5">Starting at $15/mo — AI plans, full drill library, and more</div>
+                <div className="text-xs text-offwhite/40 mt-0.5">Starting at $10/mo — Custom plans, full drill library, and more</div>
               </div>
               <span className="text-wheat text-xs font-display tracking-wider">UPGRADE →</span>
             </div>
