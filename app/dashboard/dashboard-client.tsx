@@ -80,6 +80,13 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
       // Load notifications based on last_seen_at
       const lastSeen = profile?.last_seen_at || new Date(0).toISOString();
       const playerIds = allPlayers.map((p: any) => p.id);
+      if (isCoach) {
+        const { data: cp } = await supabase.from('coach_profiles').select('id').eq('user_id', userId).single();
+        if (cp) {
+          const { data: coachPlayers } = await supabase.from('player_coaches').select('player_id').eq('coach_profile_id', cp.id).eq('status', 'active');
+          if (coachPlayers) coachPlayers.forEach((cp: any) => { if (!playerIds.includes(cp.player_id)) playerIds.push(cp.player_id); });
+        }
+      }
 
       if (playerIds.length > 0) {
         const notifs: any[] = [];
