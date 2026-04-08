@@ -29,7 +29,7 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const publicPaths = ['/', '/auth/login', '/auth/signup', '/auth/claim-profile', '/auth/callback'];
+  const publicPaths = ['/', '/auth/login', '/auth/signup', '/auth/claim-profile', '/auth/callback', '/auth/forgot-password', '/auth/reset-password'];
   const isPublicPath = publicPaths.some(path => request.nextUrl.pathname === path) || request.nextUrl.pathname.startsWith('/coach/') || request.nextUrl.pathname.startsWith('/blog');
 
   if (!user && !isPublicPath) {
