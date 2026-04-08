@@ -508,12 +508,12 @@ async function handleDisconnectCoach(connectionId: string) {
           <div className="space-y-4">
             {isCoach && (
               <div className="rounded-xl bg-navy-light border border-wheat/10 p-6">
-                <h3 className="font-display text-lg text-wheat mb-1">Generate AI Development Plan</h3>
+                <h3 className="font-display text-lg text-wheat mb-1">Generate a Custom Plan</h3>
                 <p className="text-xs text-offwhite/40 mb-4">Describe what you&apos;re observing and CageTrack AI will create a targeted drill plan.</p>
                 <form onSubmit={handleGenerateAiPlan} className="space-y-3">
                   <textarea value={aiInput} onChange={(e) => setAiInput(e.target.value)} rows={4} required className="w-full p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors resize-none" placeholder="Dropping back elbow on outside pitches. Gets jammed inside but decent bat path when he stays through the ball..." />
                   {aiError && <p className="text-red-400 text-xs">{aiError}</p>}
-                  <button type="submit" disabled={aiGenerating || !aiInput} className="px-6 py-2 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors disabled:opacity-50">{aiGenerating ? 'Generating Plan...' : 'Generate AI Plan'}</button>
+                  <button type="submit" disabled={aiGenerating || !aiInput} className="px-6 py-2 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors disabled:opacity-50">{aiGenerating ? 'Generating Plan...' : 'Generate Custom Plan'}</button>
                 </form>
               </div>
             )}
