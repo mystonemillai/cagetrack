@@ -334,9 +334,11 @@ async function handleDisconnectCoach(connectionId: string) {
                           </div>
                         </div>
                       </div>
-                      {!isCoach && (
-                        <button onClick={() => handleDisconnectCoach(pc.id)} className="text-[10px] text-offwhite/20 hover:text-red-400 transition-colors">Disconnect</button>
-                      )}
+                      <div className="flex items-center gap-3">
+                        <button onClick={() => setActiveTab('messages')} className="text-[10px] text-wheat hover:underline">Message</button>
+                        {!isCoach && (
+                          <button onClick={() => handleDisconnectCoach(pc.id)} className="text-[10px] text-offwhite/20 hover:text-red-400 transition-colors">Disconnect</button>
+                        )}
                     </div>
                   ))}
                 </div>
