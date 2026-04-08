@@ -263,7 +263,7 @@ async function handleDisconnectCoach(connectionId: string) {
         <div className="flex gap-1 mb-6 bg-navy-light rounded-lg p-1 overflow-x-auto">
           {['overview', 'observations', 'drills', 'ai-plans', 'messages'].map((tab) => (
             <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 rounded-md text-xs font-medium whitespace-nowrap transition-all ${activeTab === tab ? 'bg-wheat text-navy' : 'text-offwhite/40 hover:text-offwhite/60'}`}>
-              {tab === 'overview' ? 'Overview' : tab === 'observations' ? 'Observations' : tab === 'drills' ? 'Drills' : tab === 'ai-plans' ? 'AI Plans' : 'Messages'}
+              {tab === 'overview' ? 'Overview' : tab === 'observations' ? 'Observations' : tab === 'drills' ? 'Drills' : tab === 'ai-plans' ? 'Custom Plans' : 'Messages'}
             </button>
           ))}
         </div>
@@ -281,7 +281,7 @@ async function handleDisconnectCoach(connectionId: string) {
               </button>
               <button onClick={() => setActiveTab('ai-plans')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
                 <div className="font-display text-2xl text-wheat">{aiPlans.length}</div>
-                <div className="text-[10px] text-offwhite/40 uppercase tracking-wider mt-1">AI Plans</div>
+                <div className="text-[10px] text-offwhite/40 uppercase tracking-wider mt-1">Custom Plans</div>
               </button>
             </div>
 
@@ -518,7 +518,7 @@ async function handleDisconnectCoach(connectionId: string) {
               </div>
             )}
             {aiPlans.length === 0 ? (
-              <div className="text-center py-8 text-offwhite/30 text-sm">No AI plans yet.</div>
+              <div className="text-center py-8 text-offwhite/30 text-sm">No Custom plans yet.</div>
             ) : (
               aiPlans.map((plan) => (
                 <div key={plan.id} className="rounded-xl bg-navy-light border border-wheat/8 p-5">
