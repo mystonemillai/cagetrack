@@ -44,9 +44,9 @@ export default function PlayerDetailPage() {
   const [drillSource, setDrillSource] = useState('master');
   const [myDrills, setMyDrills] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
-  const [playerCoaches, setPlayerCoaches] = useState<any[]>([]);
   const [msgText, setMsgText] = useState('');
   const [msgSending, setMsgSending] = useState(false);
+  const [playerCoaches, setPlayerCoaches] = useState<any[]>([]);
 
   useEffect(() => {
     async function loadData() {
@@ -77,11 +77,11 @@ export default function PlayerDetailPage() {
       const { data: plans } = await supabase.from('ai_plans').select('*, coach_profiles(display_name)').eq('player_id', playerId).order('created_at', { ascending: false });
       setAiPlans(plans || []);
 
-      const { data: pCoaches } = await supabase.from('player_coaches').select('*, coach_profiles(id, display_name, specialty, specialties, profiles(avatar_url))').eq('player_id', playerId).eq('status', 'active');
-      setPlayerCoaches(pCoaches || []);
-
       const { data: msgs } = await supabase.from('messages').select('*').eq('player_id', playerId).order('created_at', { ascending: true });
       setMessages(msgs || []);
+
+      const { data: pCoaches } = await supabase.from('player_coaches').select('*, coach_profiles(id, display_name, specialty, specialties, profiles(avatar_url))').eq('player_id', playerId).eq('status', 'active');
+      setPlayerCoaches(pCoaches || []);
 
       setLoading(false);
     }
@@ -196,11 +196,13 @@ export default function PlayerDetailPage() {
       setAiGenerating(false);
     }
   }
-async function handleDisconnectCoach(connectionId: string) {
+
+  async function handleDisconnectCoach(connectionId: string) {
     if (!confirm('Disconnect from this coach?')) return;
     await supabase.from('player_coaches').delete().eq('id', connectionId);
     window.location.reload();
   }
+
   async function handleSendMessage(e: React.FormEvent) {
     e.preventDefault();
     if (!msgText.trim() || !profile) return;
@@ -301,7 +303,7 @@ async function handleDisconnectCoach(connectionId: string) {
                         <div className="text-sm text-offwhite/80 line-clamp-2">
                           {item.type === 'observation' && item.data.observation_text}
                           {item.type === 'drill' && `Drill assigned: ${item.data.master_drills?.drill_name || item.data.coach_drills?.drill_name || 'Custom drill'}`}
-                          {item.type === 'ai' && `AI Plan: ${item.data.input_text}`}
+                          {item.type === 'ai' && `Custom Plan: ${item.data.input_text}`}
                         </div>
                         <div className="text-[10px] text-offwhite/30 mt-1">{item.data.coach_profiles?.display_name || 'Coach'} · {formatTime(item.date)}</div>
                       </div>
@@ -310,6 +312,7 @@ async function handleDisconnectCoach(connectionId: string) {
                 </div>
               )}
             </div>
+
             {/* Connected Coaches */}
             {playerCoaches.length > 0 && (
               <div className="rounded-xl bg-navy-light border border-wheat/8 p-6">
@@ -336,8 +339,6 @@ async function handleDisconnectCoach(connectionId: string) {
                       </div>
                       <div className="flex items-center gap-3">
                         <button onClick={() => setActiveTab('messages')} className="text-[10px] text-wheat hover:underline">Message</button>
-                        <div className="flex items-center gap-3">
-                        <button onClick={() => setActiveTab('messages')} className="text-[10px] text-wheat hover:underline">Message</button>
                         {!isCoach && (
                           <button onClick={() => handleDisconnectCoach(pc.id)} className="text-[10px] text-offwhite/20 hover:text-red-400 transition-colors">Disconnect</button>
                         )}
@@ -357,7 +358,7 @@ async function handleDisconnectCoach(connectionId: string) {
                   <div className="text-xl mb-1">📋</div><div className="text-[10px] text-offwhite/50">Assign Drill</div>
                 </button>
                 <button onClick={() => setActiveTab('ai-plans')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
-                  <div className="text-xl mb-1">🧠</div><div className="text-[10px] text-offwhite/50">AI Plan</div>
+                  <div className="text-xl mb-1">🧠</div><div className="text-[10px] text-offwhite/50">Custom Plan</div>
                 </button>
               </div>
             )}
@@ -518,7 +519,7 @@ async function handleDisconnectCoach(connectionId: string) {
               </div>
             )}
             {aiPlans.length === 0 ? (
-              <div className="text-center py-8 text-offwhite/30 text-sm">No Custom plans yet.</div>
+              <div className="text-center py-8 text-offwhite/30 text-sm">No custom plans yet.</div>
             ) : (
               aiPlans.map((plan) => (
                 <div key={plan.id} className="rounded-xl bg-navy-light border border-wheat/8 p-5">
