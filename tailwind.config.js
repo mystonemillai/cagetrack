@@ -20,7 +20,7 @@ module.exports = {
       },
       fontFamily: {
         display: ['Bebas Neue', 'sans-serif'],
-        body: ['DM Sans', 'sans-serif'],
+        body: ['Inter', 'sans-serif'],
       },
     },
   },
