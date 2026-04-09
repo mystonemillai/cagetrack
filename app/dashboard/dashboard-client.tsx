@@ -390,7 +390,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
               <QuickAction icon="⚙️" label="Settings" href="/settings" />
             </div>
 
-            {(isFamily && hasPlayers && (
+            {isFamily && hasPlayers && (
               <button onClick={() => setShowCreatePlayer(true)} className="mt-6 w-full p-4 rounded-xl border border-dashed border-wheat/15 text-offwhite/30 hover:text-wheat hover:border-wheat/30 transition-all text-sm">+ Add Another Player</button>
             )}
           </>
