@@ -18,11 +18,14 @@ export default function CoachDirectoryPage() {
   const [searchState, setSearchState] = useState('');
   const [searchSport, setSearchSport] = useState('All');
   const [searchSpecialty, setSearchSpecialty] = useState('All');
+  const [searchRadius, setSearchRadius] = useState(50);
+  const [userLat, setUserLat] = useState<number | null>(null);
+  const [userLng, setUserLng] = useState<number | null>(null);
+  const [userZip, setUserZip] = useState('');
+  const [useDistance, setUseDistance] = useState(false);
   const [expandedCoach, setExpandedCoach] = useState<string | null>(null);
   const [players, setPlayers] = useState<any[]>([]);
   const [connecting, setConnecting] = useState<string | null>(null);
-  const [connectMessage, setConnectMessage] = useState('');
-  const [showConnectForm, setShowConnectForm] = useState<string | null>(null);
   const [connectSuccess, setConnectSuccess] = useState<string | null>(null);
   const [connectError, setConnectError] = useState<string | null>(null);
   const [existingConnections, setExistingConnections] = useState<any[]>([]);
@@ -36,6 +39,20 @@ export default function CoachDirectoryPage() {
       const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
       if (profile?.city) setSearchCity(profile.city);
       if (profile?.state) setSearchState(profile.state);
+
+      // Geocode user's zip for distance filtering
+      if (profile?.zip_code) {
+        setUserZip(profile.zip_code);
+        try {
+          const geoRes = await fetch(`/api/geocode?zip=${profile.zip_code}`);
+          if (geoRes.ok) {
+            const geoData = await geoRes.json();
+            setUserLat(geoData.latitude);
+            setUserLng(geoData.longitude);
+            setUseDistance(true);
+          }
+        } catch (e) {}
+      }
 
       // Load user's players for connecting
       const { data: pl } = await supabase.from('players').select('*').eq('owner_user_id', user.id);
@@ -70,14 +87,39 @@ export default function CoachDirectoryPage() {
     loadData();
   }, []);
 
+  function getDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+    const R = 3959; // Earth radius in miles
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng/2) * Math.sin(dLng/2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+
   useEffect(() => {
     let results = [...coaches];
-    if (searchState) results = results.filter(c => c.state && c.state.toLowerCase() === searchState.toLowerCase());
-    if (searchCity) results = results.filter(c => c.city && c.city.toLowerCase().includes(searchCity.toLowerCase()));
+
+    // Distance filter takes priority over city/state
+    if (useDistance && userLat && userLng) {
+      results = results.filter(c => {
+        if (!c.latitude || !c.longitude) return false;
+        const dist = getDistance(userLat, userLng, c.latitude, c.longitude);
+        return dist <= searchRadius;
+      });
+      // Sort by distance
+      results.sort((a, b) => {
+        const distA = getDistance(userLat!, userLng!, a.latitude, a.longitude);
+        const distB = getDistance(userLat!, userLng!, b.latitude, b.longitude);
+        return distA - distB;
+      });
+    } else {
+      if (searchState) results = results.filter(c => c.state && c.state.toLowerCase() === searchState.toLowerCase());
+      if (searchCity) results = results.filter(c => c.city && c.city.toLowerCase().includes(searchCity.toLowerCase()));
+    }
+
     if (searchSport !== 'All') results = results.filter(c => c.sports && c.sports.includes(searchSport));
     if (searchSpecialty !== 'All') results = results.filter(c => (c.specialties && c.specialties.includes(searchSpecialty)) || c.specialty === searchSpecialty);
     setFilteredCoaches(results);
-  }, [searchCity, searchState, searchSport, searchSpecialty, coaches]);
+  }, [searchCity, searchState, searchSport, searchSpecialty, searchRadius, useDistance, userLat, userLng, coaches]);
 
   async function handleConnect(coachId: string) {
     if (players.length === 0) {
@@ -93,15 +135,11 @@ export default function CoachDirectoryPage() {
     setConnecting(coachId);
     setConnectError(null);
 
-    const userName = players[0].first_name + ' ' + players[0].last_name;
-
     const { error } = await supabase.from('player_coaches').insert({
       player_id: players[0].id,
       coach_profile_id: coachId,
       status: 'pending_approval',
       invite_code: 'DIR-' + Math.random().toString(36).substring(2, 7).toUpperCase(),
-      request_message: connectMessage || null,
-      requested_by_name: userName,
     });
 
     if (error) {
@@ -117,10 +155,7 @@ export default function CoachDirectoryPage() {
     setConnectSuccess(coachId);
     setExistingConnections([...existingConnections, { coach_profile_id: coachId, status: 'pending_approval' }]);
     setConnecting(null);
-    setConnectMessage('');
-    setShowConnectForm(null);
   }
-  
 
   if (loading) {
     return (<div className="min-h-screen flex items-center justify-center"><div className="text-wheat font-display text-xl animate-pulse">Loading...</div></div>);
@@ -146,9 +181,30 @@ export default function CoachDirectoryPage() {
 
         {/* Filters */}
         <div className="rounded-xl bg-navy-light border border-wheat/8 p-5 mb-6 space-y-4 animate-fade-in-delay-1">
-          <div className="grid grid-cols-5 gap-3">
-            <input type="text" value={searchCity} onChange={(e) => setSearchCity(e.target.value)} className="col-span-3 p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors" placeholder="City" />
-            <input type="text" value={searchState} onChange={(e) => setSearchState(e.target.value)} maxLength={2} className="col-span-2 p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors uppercase" placeholder="State (IL)" />
+          <div>
+            <label className="block text-xs uppercase tracking-widest text-offwhite/40 mb-2">Location</label>
+            {useDistance && userLat ? (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-offwhite/60">Within <span className="text-wheat font-display text-lg">{searchRadius}</span> miles of {userZip}</span>
+                  <button onClick={() => setUseDistance(false)} className="text-[10px] text-offwhite/30 hover:text-wheat">Search by city instead</button>
+                </div>
+                <input type="range" min="10" max="200" step="10" value={searchRadius} onChange={(e) => setSearchRadius(parseInt(e.target.value))} className="w-full accent-[#D4A96A]" />
+                <div className="flex justify-between text-[10px] text-offwhite/20 mt-1">
+                  <span>10 mi</span>
+                  <span>100 mi</span>
+                  <span>200 mi</span>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div className="grid grid-cols-5 gap-3">
+                  <input type="text" value={searchCity} onChange={(e) => { setSearchCity(e.target.value); setUseDistance(false); }} className="col-span-3 p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors" placeholder="City" />
+                  <input type="text" value={searchState} onChange={(e) => { setSearchState(e.target.value); setUseDistance(false); }} maxLength={2} className="col-span-2 p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors uppercase" placeholder="State (IL)" />
+                </div>
+                {userLat && <button onClick={() => setUseDistance(true)} className="text-[10px] text-wheat hover:underline mt-2">Search by distance instead</button>}
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-xs uppercase tracking-widest text-offwhite/40 mb-2">Sport</label>
@@ -171,8 +227,8 @@ export default function CoachDirectoryPage() {
         {/* Results header */}
         <div className="mb-3 flex justify-between items-center">
           <span className="text-xs text-offwhite/40">{filteredCoaches.length} coach{filteredCoaches.length !== 1 ? 'es' : ''} found</span>
-          {(searchCity || searchState || searchSport !== 'All' || searchSpecialty !== 'All') && (
-            <button onClick={() => { setSearchCity(''); setSearchState(''); setSearchSport('All'); setSearchSpecialty('All'); }} className="text-xs text-wheat hover:underline">Clear filters</button>
+          {(searchCity || searchState || searchSport !== 'All' || searchSpecialty !== 'All' || useDistance) && (
+            <button onClick={() => { setSearchCity(''); setSearchState(''); setSearchSport('All'); setSearchSpecialty('All'); setUseDistance(false); }} className="text-xs text-wheat hover:underline">Clear filters</button>
           )}
         </div>
 
@@ -216,7 +272,7 @@ export default function CoachDirectoryPage() {
                         ))}
                       </div>
                       {coach.city && coach.state && (
-                        <p className="text-xs text-offwhite/30 mt-2">{coach.city}, {coach.state} {coach.service_radius_miles ? `· ${coach.service_radius_miles} mi radius` : ''}</p>
+                        <p className="text-xs text-offwhite/30 mt-2">{coach.city}, {coach.state} {coach.service_radius_miles ? `· ${coach.service_radius_miles} mi radius` : ''}{useDistance && userLat && coach.latitude ? ` · ${Math.round(getDistance(userLat, userLng!, coach.latitude, coach.longitude))} mi away` : ''}</p>
                       )}
                     </div>
                   </div>
@@ -231,22 +287,15 @@ export default function CoachDirectoryPage() {
                     {coach.video_intro_url && (
                       <a href={coach.video_intro_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-wheat hover:underline mb-4">▶ Watch Intro Video</a>
                     )}
-                    <div>
+                    <div className="flex gap-3">
                       {(() => {
                         const existing = existingConnections.find(c => c.coach_profile_id === coach.id);
-                        if (existing?.status === 'active') return <span className="px-6 py-2.5 bg-green-500/10 text-green-400 text-sm font-display tracking-wider rounded-lg inline-block">Connected</span>;
-                        if (existing?.status === 'pending_approval' || connectSuccess === coach.id) return <span className="px-6 py-2.5 bg-wheat/10 text-wheat text-sm font-display tracking-wider rounded-lg inline-block">Request Sent — Waiting for Approval</span>;
-                        if (showConnectForm === coach.id) return (
-                          <div className="space-y-3">
-                            <textarea value={connectMessage} onChange={(e) => setConnectMessage(e.target.value)} rows={2} className="w-full p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors resize-none text-sm" placeholder="Introduce yourself — tell the coach about your player and what you're looking for..." />
-                            <div className="flex gap-2">
-                              <button onClick={() => handleConnect(coach.id)} disabled={connecting === coach.id} className="px-6 py-2.5 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors disabled:opacity-50">{connecting === coach.id ? 'Sending...' : 'Send Request'}</button>
-                              <button onClick={() => setShowConnectForm(null)} className="px-4 py-2.5 text-xs text-offwhite/30 hover:text-wheat">Cancel</button>
-                            </div>
-                          </div>
-                        );
+                        if (existing?.status === 'active') return <span className="px-6 py-2.5 bg-green-500/10 text-green-400 text-sm font-display tracking-wider rounded-lg">Connected</span>;
+                        if (existing?.status === 'pending_approval' || connectSuccess === coach.id) return <span className="px-6 py-2.5 bg-wheat/10 text-wheat text-sm font-display tracking-wider rounded-lg">Request Sent — Waiting for Approval</span>;
                         return (
-                          <button onClick={() => setShowConnectForm(coach.id)} className="px-6 py-2.5 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors">Request to Connect</button>
+                          <button onClick={() => handleConnect(coach.id)} disabled={connecting === coach.id} className="px-6 py-2.5 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors disabled:opacity-50">
+                            {connecting === coach.id ? 'Sending Request...' : 'Request to Connect'}
+                          </button>
                         );
                       })()}
                     </div>
