@@ -163,13 +163,6 @@ export default function PlayerDetailPage() {
   async function handleGenerateAiPlan(e: React.FormEvent) {
     e.preventDefault();
     if (!coachProfile || !aiInput) return;
-    // Rate limit: max 10 plans per player per month
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-    const { count } = await supabase.from('ai_plans').select('*', { count: 'exact', head: true }).eq('player_id', playerId).gt('created_at', thirtyDaysAgo);
-    if (count && count >= 10) {
-      setAiError('Limit reached — 10 custom plans per player per month.');
-      return;
-    }
     setAiError(''); setAiGenerating(true);
 
     try {
@@ -269,9 +262,9 @@ export default function PlayerDetailPage() {
           )}
         </div>
 
-        <div className="flex gap-1 mb-6 bg-navy-light rounded-lg p-1 overflow-x-auto">
+        <div className="flex flex-wrap gap-1 mb-6 bg-navy-light rounded-lg p-1">
           {['overview', 'observations', 'drills', 'ai-plans', 'messages'].map((tab) => (
-            <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 rounded-md text-xs font-medium whitespace-nowrap transition-all ${activeTab === tab ? 'bg-wheat text-navy' : 'text-offwhite/40 hover:text-offwhite/60'}`}>
+            <button key={tab} onClick={() => setActiveTab(tab)} className={`px-3 sm:px-4 py-2 rounded-md text-xs font-medium whitespace-nowrap transition-all ${activeTab === tab ? 'bg-wheat text-navy' : 'text-offwhite/40 hover:text-offwhite/60'}`}>
               {tab === 'overview' ? 'Overview' : tab === 'observations' ? 'Observations' : tab === 'drills' ? 'Drills' : tab === 'ai-plans' ? 'Custom Plans' : 'Messages'}
             </button>
           ))}
@@ -279,20 +272,7 @@ export default function PlayerDetailPage() {
 
         {activeTab === 'overview' && (
           <div className="space-y-4">
-            {isCoach && (
-              <div className="grid grid-cols-3 gap-3">
-                <button onClick={() => setActiveTab('observations')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
-                  <div className="text-xl mb-1">👁️</div><div className="text-[10px] text-offwhite/50">Add Observation</div>
-                </button>
-                <button onClick={() => setActiveTab('drills')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
-                  <div className="text-xl mb-1">📋</div><div className="text-[10px] text-offwhite/50">Assign Drill</div>
-                </button>
-                <button onClick={() => setActiveTab('ai-plans')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
-                  <div className="text-xl mb-1">🧠</div><div className="text-[10px] text-offwhite/50">Custom Plan</div>
-                </button>
-              </div>
-            )}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <button onClick={() => setActiveTab('observations')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
                 <div className="font-display text-2xl text-wheat">{observations.length}</div>
                 <div className="text-[10px] text-offwhite/40 uppercase tracking-wider mt-1">Observations</div>
@@ -304,6 +284,10 @@ export default function PlayerDetailPage() {
               <button onClick={() => setActiveTab('ai-plans')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
                 <div className="font-display text-2xl text-wheat">{aiPlans.length}</div>
                 <div className="text-[10px] text-offwhite/40 uppercase tracking-wider mt-1">Custom Plans</div>
+              </button>
+              <button onClick={() => setActiveTab('messages')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
+                <div className="font-display text-2xl text-wheat">{messages.length}</div>
+                <div className="text-[10px] text-offwhite/40 uppercase tracking-wider mt-1">Messages</div>
               </button>
             </div>
 
@@ -347,8 +331,8 @@ export default function PlayerDetailPage() {
                           <div className="w-10 h-10 rounded-full bg-wheat/10 flex items-center justify-center text-lg">🧢</div>
                         )}
                         <div>
-                          <div className="text-sm font-medium truncate">{pc.coach_profiles?.display_name || 'Coach'}</div>
-                          <div className="flex flex-wrap gap-1 mt-0.5">
+                          <div className="text-sm font-medium">{pc.coach_profiles?.display_name || 'Coach'}</div>
+                          <div className="flex gap-1 mt-0.5">
                             {pc.coach_profiles?.specialties ? pc.coach_profiles.specialties.map((s: string) => (
                               <span key={s} className="text-[9px] text-offwhite/30 bg-offwhite/5 px-1.5 py-0.5 rounded">{s}</span>
                             )) : pc.coach_profiles?.specialty && (
@@ -357,10 +341,10 @@ export default function PlayerDetailPage() {
                           </div>
                         </div>
                       </div>
-                      <div className="flex flex-col items-end gap-2">
-                        <button onClick={() => setActiveTab('messages')} className="text-xs text-wheat hover:underline">Message</button>
+                      <div className="flex items-center gap-3">
+                        <button onClick={() => setActiveTab('messages')} className="text-[10px] text-wheat hover:underline">Message</button>
                         {!isCoach && (
-                          <button onClick={() => handleDisconnectCoach(pc.id)} className="text-xs text-offwhite/20 hover:text-red-400 transition-colors">Disconnect</button>
+                          <button onClick={() => handleDisconnectCoach(pc.id)} className="text-[10px] text-offwhite/20 hover:text-red-400 transition-colors">Disconnect</button>
                         )}
                       </div>
                     </div>
@@ -369,7 +353,19 @@ export default function PlayerDetailPage() {
               </div>
             )}
 
-            
+            {isCoach && (
+              <div className="grid grid-cols-3 gap-3">
+                <button onClick={() => setActiveTab('observations')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
+                  <div className="text-xl mb-1">👁️</div><div className="text-[10px] text-offwhite/50">Add Observation</div>
+                </button>
+                <button onClick={() => setActiveTab('drills')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
+                  <div className="text-xl mb-1">📋</div><div className="text-[10px] text-offwhite/50">Assign Drill</div>
+                </button>
+                <button onClick={() => setActiveTab('ai-plans')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
+                  <div className="text-xl mb-1">🧠</div><div className="text-[10px] text-offwhite/50">Custom Plan</div>
+                </button>
+              </div>
+            )}
           </div>
         )}
 
