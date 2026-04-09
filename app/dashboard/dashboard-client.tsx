@@ -80,13 +80,6 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
       // Load notifications based on last_seen_at
       const lastSeen = profile?.last_seen_at || new Date(0).toISOString();
       const playerIds = allPlayers.map((p: any) => p.id);
-      if (isCoach) {
-        const { data: cp } = await supabase.from('coach_profiles').select('id').eq('user_id', userId).single();
-        if (cp) {
-          const { data: coachPlayers } = await supabase.from('player_coaches').select('player_id').eq('coach_profile_id', cp.id).eq('status', 'active');
-          if (coachPlayers) coachPlayers.forEach((cp: any) => { if (!playerIds.includes(cp.player_id)) playerIds.push(cp.player_id); });
-        }
-      }
 
       if (playerIds.length > 0) {
         const notifs: any[] = [];
@@ -98,13 +91,10 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
         if (newDrills) newDrills.forEach(d => notifs.push({ type: 'drill', text: `${d.coach_profiles?.display_name || 'A coach'} assigned "${d.master_drills?.drill_name || d.coach_drills?.drill_name || 'a drill'}" to ${d.players?.first_name || 'your player'}`, date: d.assigned_at }));
 
         const { data: newPlans } = await supabase.from('ai_plans').select('*, coach_profiles(display_name), players(first_name)').in('player_id', playerIds).gt('created_at', lastSeen).order('created_at', { ascending: false }).limit(5);
-        if (newPlans) newPlans.forEach(p => notifs.push({ type: 'ai', text: `${p.coach_profiles?.display_name || 'A coach'} created a custom plan for ${p.players?.first_name || 'your player'}`, date: p.created_at }));
+        if (newPlans) newPlans.forEach(p => notifs.push({ type: 'ai', text: `${p.coach_profiles?.display_name || 'A coach'} created an AI plan for ${p.players?.first_name || 'your player'}`, date: p.created_at }));
 
         const { data: newMsgs } = await supabase.from('messages').select('*, players(first_name)').in('player_id', playerIds).gt('created_at', lastSeen).neq('sender_user_id', userId).order('created_at', { ascending: false }).limit(10);
         if (newMsgs) newMsgs.forEach(m => notifs.push({ type: 'message', text: `${m.sender_name || 'Someone'} sent a message on ${m.players?.first_name || 'your player'}'s profile`, date: m.created_at }));
-        // Check for newly approved connections
-        const { data: newConnections } = await supabase.from('player_coaches').select('*, coach_profiles(display_name)').in('player_id', playerIds).eq('status', 'active').gt('connected_at', lastSeen);
-        if (newConnections) newConnections.forEach(c => notifs.push({ type: 'connection', text: `${c.coach_profiles?.display_name || 'A coach'} accepted your connection request!`, date: c.connected_at }));
 
         notifs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         setNotifications(notifs);
@@ -315,7 +305,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
             <div className="space-y-2">
               {notifications.slice(0, 5).map((n, i) => (
                 <div key={i} className="flex items-start gap-2">
-                  <span className="text-xs mt-0.5">{n.type === 'observation' ? '👁️' : n.type === 'drill' ? '📋' : n.type === 'ai' ? '🧠' : n.type === 'connection' ? '🤝' : '💬'}</span>
+                  <span className="text-xs mt-0.5">{n.type === 'observation' ? '👁️' : n.type === 'drill' ? '📋' : n.type === 'ai' ? '🧠' : '💬'}</span>
                   <span className="text-xs text-offwhite/60">{n.text}</span>
                 </div>
               ))}
@@ -348,7 +338,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-sm font-semibold text-wheat">Upgrade to unlock all features</div>
-                <div className="text-xs text-offwhite/40 mt-0.5">Starting at $10/mo — Custom plans, full drill library, and more</div>
+                <div className="text-xs text-offwhite/40 mt-0.5">Starting at $15/mo — AI plans, full drill library, and more</div>
               </div>
               <span className="text-wheat text-xs font-display tracking-wider">UPGRADE →</span>
             </div>
@@ -400,7 +390,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
               <QuickAction icon="⚙️" label="Settings" href="/settings" />
             </div>
 
-            {isFamily && hasPlayers && (
+            {(isFamily || isPlayer) && hasPlayers && (
               <button onClick={() => setShowCreatePlayer(true)} className="mt-6 w-full p-4 rounded-xl border border-dashed border-wheat/15 text-offwhite/30 hover:text-wheat hover:border-wheat/30 transition-all text-sm">+ Add Another Player</button>
             )}
           </>
@@ -436,26 +426,22 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
             )}
             {pendingRequests.length > 0 && (
               <div className="mb-6">
-                <h2 className="font-display text-xl text-wheat mb-3">Connection Requests ({pendingRequests.length})</h2>
+                <h2 className="font-display text-xl text-wheat mb-3">Connection Requests</h2>
                 <div className="space-y-3">
                   {pendingRequests.map((req) => (
                     <div key={req.id} className="rounded-xl bg-wheat/5 border border-wheat/15 p-5">
-                      <div className="mb-3">
-                        <h3 className="font-display text-lg tracking-wide">{req.players?.first_name} {req.players?.last_name}</h3>
-                        <div className="flex gap-2 mt-1">
-                          {req.players?.age_group && <span className="text-xs text-wheat bg-wheat/10 px-2 py-0.5 rounded">{req.players.age_group}</span>}
-                          {req.players?.sport && <span className="text-xs text-offwhite/30 bg-offwhite/5 px-2 py-0.5 rounded">{req.players.sport}</span>}
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-display text-lg tracking-wide">{req.players?.first_name} {req.players?.last_name}</h3>
+                          <div className="flex gap-2 mt-1">
+                            {req.players?.age_group && <span className="text-xs text-wheat bg-wheat/10 px-2 py-0.5 rounded">{req.players.age_group}</span>}
+                            {req.players?.sport && <span className="text-xs text-offwhite/30 bg-offwhite/5 px-2 py-0.5 rounded">{req.players.sport}</span>}
+                          </div>
                         </div>
-                        {req.requested_by_name && <p className="text-xs text-offwhite/40 mt-2">Requested by {req.requested_by_name}</p>}
-                      </div>
-                      {req.request_message && (
-                        <div className="p-3 bg-navy rounded-lg border border-wheat/8 mb-3">
-                          <p className="text-sm text-offwhite/60 italic">{req.request_message}</p>
+                        <div className="flex gap-2">
+                          <button onClick={() => handleApproveRequest(req.id)} className="px-4 py-2 bg-wheat text-navy text-xs font-display tracking-wider rounded-lg hover:bg-wheat/90">Approve</button>
+                          <button onClick={() => handleDenyRequest(req.id)} className="px-4 py-2 bg-offwhite/5 border border-offwhite/10 text-offwhite/40 text-xs font-display tracking-wider rounded-lg hover:text-red-400 hover:border-red-400/20">Deny</button>
                         </div>
-                      )}
-                      <div className="flex gap-2">
-                        <button onClick={() => handleApproveRequest(req.id)} className="px-5 py-2 bg-wheat text-navy text-xs font-display tracking-wider rounded-lg hover:bg-wheat/90">Approve</button>
-                        <button onClick={() => handleDenyRequest(req.id)} className="px-5 py-2 bg-offwhite/5 border border-offwhite/10 text-offwhite/40 text-xs font-display tracking-wider rounded-lg hover:text-red-400 hover:border-red-400/20">Deny</button>
                       </div>
                     </div>
                   ))}
@@ -520,7 +506,7 @@ function CoachInviteCodeEntry({ coachProfile }: { coachProfile: any }) {
     if (updateError) { setError(updateError.message); setLoading(false); return; }
     setSuccess(`Connected to ${data.players.first_name} ${data.players.last_name}!`);
     setCode(''); setLoading(false);
-    setTimeout(() => window.location.href = '/dashboard', 1500);
+    setTimeout(() => window.location.reload(), 1500);
   }
 
   return (
