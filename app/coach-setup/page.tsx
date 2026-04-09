@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase-browser';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-const SPECIALTIES = ['Hitting', 'Pitching', 'Catching', 'Infield', 'Outfield', '1st Base', '3rd Base', 'Middle Infield', 'Baserunning', 'Fielding', 'Mental Game', 'Strength & Conditioning', 'General'];
+const SPECIALTIES = ['Hitting', 'Pitching', 'Catching', 'Fielding', 'Baserunning', 'Mental Game', 'Strength & Conditioning', 'General'];
 const COACH_TYPES = ['Head Coach', 'Hitting Coach', 'Pitching Coach', 'Catching Coach', 'Private Instructor', 'Strength Coach', 'Mental Performance', 'Other'];
 
 export default function CoachSetupPage() {
@@ -80,6 +80,20 @@ export default function CoachSetupPage() {
 
     if (!displayName) { setError('Display name is required.'); setSaving(false); return; }
 
+    // Geocode zip code if provided
+    let latitude = null;
+    let longitude = null;
+    if (zipCode) {
+      try {
+        const geoRes = await fetch(`/api/geocode?zip=${zipCode}`);
+        if (geoRes.ok) {
+          const geoData = await geoRes.json();
+          latitude = geoData.latitude;
+          longitude = geoData.longitude;
+        }
+      } catch (e) {}
+    }
+
     const profileData = {
       user_id: userId,
       display_name: displayName,
@@ -95,6 +109,8 @@ export default function CoachSetupPage() {
       is_searchable: isSearchable,
       service_radius_miles: serviceRadius,
       is_active: true,
+      latitude: latitude,
+      longitude: longitude,
     };
 
     if (existingProfile) {
