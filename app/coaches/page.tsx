@@ -28,6 +28,8 @@ export default function CoachDirectoryPage() {
   const [connecting, setConnecting] = useState<string | null>(null);
   const [connectSuccess, setConnectSuccess] = useState<string | null>(null);
   const [connectError, setConnectError] = useState<string | null>(null);
+  const [connectMessage, setConnectMessage] = useState('');
+  const [showConnectForm, setShowConnectForm] = useState<string | null>(null);
   const [existingConnections, setExistingConnections] = useState<any[]>([]);
   const [hasSubscription, setHasSubscription] = useState(false);
 
@@ -135,11 +137,15 @@ export default function CoachDirectoryPage() {
     setConnecting(coachId);
     setConnectError(null);
 
+    const userName = players[0].first_name + ' ' + players[0].last_name;
+
     const { error } = await supabase.from('player_coaches').insert({
       player_id: players[0].id,
       coach_profile_id: coachId,
       status: 'pending_approval',
       invite_code: 'DIR-' + Math.random().toString(36).substring(2, 7).toUpperCase(),
+      request_message: connectMessage || null,
+      requested_by_name: userName,
     });
 
     if (error) {
@@ -155,6 +161,8 @@ export default function CoachDirectoryPage() {
     setConnectSuccess(coachId);
     setExistingConnections([...existingConnections, { coach_profile_id: coachId, status: 'pending_approval' }]);
     setConnecting(null);
+    setConnectMessage('');
+    setShowConnectForm(null);
   }
 
   if (loading) {
@@ -287,15 +295,22 @@ export default function CoachDirectoryPage() {
                     {coach.video_intro_url && (
                       <a href={coach.video_intro_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-wheat hover:underline mb-4">▶ Watch Intro Video</a>
                     )}
-                    <div className="flex gap-3">
+                    <div>
                       {(() => {
                         const existing = existingConnections.find(c => c.coach_profile_id === coach.id);
-                        if (existing?.status === 'active') return <span className="px-6 py-2.5 bg-green-500/10 text-green-400 text-sm font-display tracking-wider rounded-lg">Connected</span>;
-                        if (existing?.status === 'pending_approval' || connectSuccess === coach.id) return <span className="px-6 py-2.5 bg-wheat/10 text-wheat text-sm font-display tracking-wider rounded-lg">Request Sent — Waiting for Approval</span>;
+                        if (existing?.status === 'active') return <span className="px-6 py-2.5 bg-green-500/10 text-green-400 text-sm font-display tracking-wider rounded-lg inline-block">Connected</span>;
+                        if (existing?.status === 'pending_approval' || connectSuccess === coach.id) return <span className="px-6 py-2.5 bg-wheat/10 text-wheat text-sm font-display tracking-wider rounded-lg inline-block">Request Sent — Waiting for Approval</span>;
+                        if (showConnectForm === coach.id) return (
+                          <div className="space-y-3">
+                            <textarea value={connectMessage} onChange={(e) => setConnectMessage(e.target.value)} rows={2} className="w-full p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors resize-none text-sm" placeholder="Introduce yourself — tell the coach about your player and what you're looking for..." />
+                            <div className="flex gap-2">
+                              <button onClick={() => handleConnect(coach.id)} disabled={connecting === coach.id} className="px-6 py-2.5 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors disabled:opacity-50">{connecting === coach.id ? 'Sending...' : 'Send Request'}</button>
+                              <button onClick={() => setShowConnectForm(null)} className="px-4 py-2.5 text-xs text-offwhite/30 hover:text-wheat">Cancel</button>
+                            </div>
+                          </div>
+                        );
                         return (
-                          <button onClick={() => handleConnect(coach.id)} disabled={connecting === coach.id} className="px-6 py-2.5 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors disabled:opacity-50">
-                            {connecting === coach.id ? 'Sending Request...' : 'Request to Connect'}
-                          </button>
+                          <button onClick={() => setShowConnectForm(coach.id)} className="px-6 py-2.5 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors">Request to Connect</button>
                         );
                       })()}
                     </div>
