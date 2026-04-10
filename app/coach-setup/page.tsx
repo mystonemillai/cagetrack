@@ -20,7 +20,7 @@ export default function CoachSetupPage() {
 
   const [displayName, setDisplayName] = useState('');
   const [specialties, setSpecialties] = useState<string[]>([]);
-  const [coachType, setCoachType] = useState('');
+  const [coachTypes, setCoachTypes] = useState<string[]>([]);
   const [bio, setBio] = useState('');
   const [videoIntroUrl, setVideoIntroUrl] = useState('');
   const [city, setCity] = useState('');
@@ -44,7 +44,7 @@ export default function CoachSetupPage() {
         setExistingProfile(cp);
         setDisplayName(cp.display_name || '');
         setSpecialties(cp.specialties || (cp.specialty ? [cp.specialty] : []));
-        setCoachType(cp.coach_type || '');
+        setCoachTypes(cp.coach_types || (cp.coach_type ? [cp.coach_type] : []));
         setBio(cp.bio || '');
         setVideoIntroUrl(cp.video_intro_url || '');
         setCity(cp.city || '');
@@ -64,7 +64,9 @@ export default function CoachSetupPage() {
     }
     loadData();
   }, []);
-
+  function toggleCoachType(ct: string) {
+    setCoachTypes(prev => prev.includes(ct) ? prev.filter(t => t !== ct) : [...prev, ct]);
+  }
   function toggleSpecialty(spec: string) {
     setSpecialties(prev => prev.includes(spec) ? prev.filter(s => s !== spec) : [...prev, spec]);
   }
@@ -99,7 +101,8 @@ export default function CoachSetupPage() {
       display_name: displayName,
       specialty: specialties.length > 0 ? specialties[0] : null,
       specialties: specialties,
-      coach_type: coachType.toLowerCase().replace(/ /g, '_') || null,
+      coach_type: coachTypes.length > 0 ? coachTypes[0].toLowerCase().replace(/ /g, '_') : null,
+      coach_types: coachTypes,
       bio: bio || null,
       video_intro_url: videoIntroUrl || null,
       city: city || null,
@@ -177,10 +180,10 @@ export default function CoachSetupPage() {
           </div>
 
           <div>
-            <label className="block text-xs uppercase tracking-widest text-offwhite/40 mb-2">Coach Type</label>
+            <label className="block text-xs uppercase tracking-widest text-offwhite/40 mb-2">Coach Type <span className="text-offwhite/20">(select all that apply)</span></label>
             <div className="flex flex-wrap gap-2">
               {COACH_TYPES.map((ct) => (
-                <button key={ct} type="button" onClick={() => setCoachType(ct)} className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${coachType === ct ? 'bg-wheat text-navy' : 'bg-navy-light border border-wheat/10 text-offwhite/50 hover:border-wheat/25'}`}>{ct}</button>
+                <button key={ct} type="button" onClick={() => toggleCoachType(ct)} className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${coachTypes.includes(ct) ? 'bg-wheat text-navy' : 'bg-navy-light border border-wheat/10 text-offwhite/50 hover:border-wheat/25'}`}>{ct}</button>
               ))}
             </div>
           </div>
