@@ -262,16 +262,26 @@ export default function PlayerDetailPage() {
           )}
         </div>
 
-        <div className="flex flex-wrap gap-1 mb-6 bg-navy-light rounded-lg p-1">
-          {['overview', 'observations', 'drills', 'ai-plans', 'messages'].map((tab) => (
-            <button key={tab} onClick={() => setActiveTab(tab)} className={`px-3 sm:px-4 py-2 rounded-md text-xs font-medium whitespace-nowrap transition-all ${activeTab === tab ? 'bg-wheat text-navy' : 'text-offwhite/40 hover:text-offwhite/60'}`}>
-              {tab === 'overview' ? 'Overview' : tab === 'observations' ? 'Observations' : tab === 'drills' ? 'Drills' : tab === 'ai-plans' ? 'Custom Plans' : 'Messages'}
-            </button>
-          ))}
-        </div>
+        {activeTab !== 'overview' && (
+          <button onClick={() => setActiveTab('overview')} className="mb-4 text-sm text-offwhite/40 hover:text-wheat transition-colors">← Back to Overview</button>
+        )}
 
         {activeTab === 'overview' && (
           <div className="space-y-4">
+            {isCoach && (
+              <div className="grid grid-cols-3 gap-3">
+                <button onClick={() => setActiveTab('observations')} className="rounded-xl bg-wheat/10 border border-wheat/20 p-4 text-center hover:border-wheat/30 transition-all">
+                  <div className="text-xl mb-1">👁️</div><div className="text-[10px] text-wheat uppercase tracking-wider">Add Observation</div>
+                </button>
+                <button onClick={() => setActiveTab('drills')} className="rounded-xl bg-wheat/10 border border-wheat/20 p-4 text-center hover:border-wheat/30 transition-all">
+                  <div className="text-xl mb-1">📋</div><div className="text-[10px] text-wheat uppercase tracking-wider">Assign Drill</div>
+                </button>
+                <button onClick={() => setActiveTab('ai-plans')} className="rounded-xl bg-wheat/10 border border-wheat/20 p-4 text-center hover:border-wheat/30 transition-all">
+                  <div className="text-xl mb-1">🧠</div><div className="text-[10px] text-wheat uppercase tracking-wider">Custom Plan</div>
+                </button>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-3">
               <button onClick={() => setActiveTab('observations')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
                 <div className="font-display text-2xl text-wheat">{observations.length}</div>
@@ -323,15 +333,15 @@ export default function PlayerDetailPage() {
                 <h2 className="font-display text-lg text-wheat mb-3">Connected Coaches</h2>
                 <div className="space-y-3">
                   {playerCoaches.map((pc) => (
-                    <div key={pc.id} className="flex items-center justify-between gap-3 py-2 border-b border-wheat/5 last:border-0">
+                    <div key={pc.id} className="flex items-center justify-between py-2 border-b border-wheat/5 last:border-0">
                       <div className="flex items-center gap-3">
                         {pc.coach_profiles?.profiles?.avatar_url ? (
                           <img src={pc.coach_profiles.profiles.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover border border-wheat/20" />
                         ) : (
                           <div className="w-10 h-10 rounded-full bg-wheat/10 flex items-center justify-center text-lg">🧢</div>
                         )}
-                        <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium truncate">{pc.coach_profiles?.display_name || 'Coach'}</div>
+                        <div>
+                          <div className="text-sm font-medium">{pc.coach_profiles?.display_name || 'Coach'}</div>
                           <div className="flex gap-1 mt-0.5">
                             {pc.coach_profiles?.specialties ? pc.coach_profiles.specialties.map((s: string) => (
                               <span key={s} className="text-[9px] text-offwhite/30 bg-offwhite/5 px-1.5 py-0.5 rounded">{s}</span>
@@ -350,20 +360,6 @@ export default function PlayerDetailPage() {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
-
-            {isCoach && (
-              <div className="grid grid-cols-3 gap-3">
-                <button onClick={() => setActiveTab('observations')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
-                  <div className="text-xl mb-1">👁️</div><div className="text-[10px] text-offwhite/50">Add Observation</div>
-                </button>
-                <button onClick={() => setActiveTab('drills')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
-                  <div className="text-xl mb-1">📋</div><div className="text-[10px] text-offwhite/50">Assign Drill</div>
-                </button>
-                <button onClick={() => setActiveTab('ai-plans')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
-                  <div className="text-xl mb-1">🧠</div><div className="text-[10px] text-offwhite/50">Custom Plan</div>
-                </button>
               </div>
             )}
           </div>
