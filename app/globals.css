@@ -163,4 +163,7 @@ select {
   nav[class*="fixed top-0"] {
     padding-top: calc(env(safe-area-inset-top, 0px) + 12px) !important;
   }
+  main {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 5rem) !important;
+  }
 }
