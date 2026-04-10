@@ -107,7 +107,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
 
         // Connection approval notifications
         const { data: newConnections } = await supabase.from('player_coaches').select('*, coach_profiles(display_name)').in('player_id', playerIds).eq('status', 'active').gt('connected_at', lastSeen);
-        if (newConnections) newConnections.forEach(c => notifs.push({ type: 'connection', text: `${c.coach_profiles?.display_name || 'A coach'} accepted your connection request!`, date: c.connected_at }));
+        if (!isCoach && newConnections) newConnections.forEach(c => notifs.push({ type: 'connection', text: `${c.coach_profiles?.display_name || 'A coach'} accepted your connection request!`, date: c.connected_at }));
 
         notifs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         setNotifications(notifs);
@@ -403,7 +403,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
               <QuickAction icon="⚙️" label="Settings" href="/settings" />
             </div>
 
-            {(isFamily || isPlayer) && hasPlayers && (
+            {isFamily && hasPlayers && (
               <button onClick={() => setShowCreatePlayer(true)} className="mt-6 w-full p-4 rounded-xl border border-dashed border-wheat/15 text-offwhite/30 hover:text-wheat hover:border-wheat/30 transition-all text-sm">+ Add Another Player</button>
             )}
           </>
