@@ -323,15 +323,15 @@ export default function PlayerDetailPage() {
                 <h2 className="font-display text-lg text-wheat mb-3">Connected Coaches</h2>
                 <div className="space-y-3">
                   {playerCoaches.map((pc) => (
-                    <div key={pc.id} className="flex items-center justify-between py-2 border-b border-wheat/5 last:border-0">
+                    <div key={pc.id} className="flex items-center justify-between gap-3 py-2 border-b border-wheat/5 last:border-0">
                       <div className="flex items-center gap-3">
                         {pc.coach_profiles?.profiles?.avatar_url ? (
                           <img src={pc.coach_profiles.profiles.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover border border-wheat/20" />
                         ) : (
                           <div className="w-10 h-10 rounded-full bg-wheat/10 flex items-center justify-center text-lg">🧢</div>
                         )}
-                        <div>
-                          <div className="text-sm font-medium">{pc.coach_profiles?.display_name || 'Coach'}</div>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-medium truncate">{pc.coach_profiles?.display_name || 'Coach'}</div>
                           <div className="flex gap-1 mt-0.5">
                             {pc.coach_profiles?.specialties ? pc.coach_profiles.specialties.map((s: string) => (
                               <span key={s} className="text-[9px] text-offwhite/30 bg-offwhite/5 px-1.5 py-0.5 rounded">{s}</span>
