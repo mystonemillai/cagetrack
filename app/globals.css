@@ -155,3 +155,13 @@ select {
     radial-gradient(circle at 20% 50%, rgba(212, 169, 106, 0.03) 0%, transparent 50%),
     radial-gradient(circle at 80% 20%, rgba(212, 169, 106, 0.02) 0%, transparent 50%);
 }
+/* iOS Safe Areas */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+.ios-nav-fix {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 12px) !important;
+}
