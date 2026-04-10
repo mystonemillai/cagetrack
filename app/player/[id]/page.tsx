@@ -333,17 +333,17 @@ export default function PlayerDetailPage() {
                 <h2 className="font-display text-lg text-wheat mb-3">Connected Coaches</h2>
                 <div className="space-y-3">
                   {playerCoaches.map((pc) => (
-                    <div key={pc.id} className="flex items-center justify-between py-2 border-b border-wheat/5 last:border-0">
+                    <div key={pc.id} className="py-3 border-b border-wheat/5 last:border-0">
                       <div className="flex items-center gap-3">
                         {pc.coach_profiles?.profiles?.avatar_url ? (
-                          <img src={pc.coach_profiles.profiles.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover border border-wheat/20" />
+                          <img src={pc.coach_profiles.profiles.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover border border-wheat/20 flex-shrink-0" />
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-wheat/10 flex items-center justify-center text-lg">🧢</div>
+                          <div className="w-10 h-10 rounded-full bg-wheat/10 flex items-center justify-center text-lg flex-shrink-0">🧢</div>
                         )}
-                        <div>
-                          <div className="text-sm font-medium">{pc.coach_profiles?.display_name || 'Coach'}</div>
-                          <div className="flex gap-1 mt-0.5">
-                            {pc.coach_profiles?.specialties ? pc.coach_profiles.specialties.map((s: string) => (
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-medium truncate">{pc.coach_profiles?.display_name || 'Coach'}</div>
+                          <div className="flex flex-wrap gap-1 mt-0.5">
+                            {pc.coach_profiles?.specialties ? pc.coach_profiles.specialties.slice(0, 3).map((s: string) => (
                               <span key={s} className="text-[9px] text-offwhite/30 bg-offwhite/5 px-1.5 py-0.5 rounded">{s}</span>
                             )) : pc.coach_profiles?.specialty && (
                               <span className="text-[9px] text-offwhite/30 bg-offwhite/5 px-1.5 py-0.5 rounded">{pc.coach_profiles.specialty}</span>
@@ -351,10 +351,10 @@ export default function PlayerDetailPage() {
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <button onClick={() => setActiveTab('messages')} className="text-[10px] text-wheat hover:underline">Message</button>
+                      <div className="flex gap-4 mt-2 ml-[52px]">
+                        <button onClick={() => setActiveTab('messages')} className="text-xs text-wheat hover:underline">Message</button>
                         {!isCoach && (
-                          <button onClick={() => handleDisconnectCoach(pc.id)} className="text-[10px] text-offwhite/20 hover:text-red-400 transition-colors">Disconnect</button>
+                          <button onClick={() => handleDisconnectCoach(pc.id)} className="text-xs text-offwhite/20 hover:text-red-400 transition-colors">Disconnect</button>
                         )}
                       </div>
                     </div>
