@@ -160,8 +160,7 @@ select {
   .pt-safe {
     padding-top: env(safe-area-inset-top);
   }
-}
-
-.ios-nav-fix {
-  padding-top: calc(env(safe-area-inset-top, 0px) + 12px) !important;
+  nav[class*="fixed top-0"] {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 12px) !important;
+  }
 }
