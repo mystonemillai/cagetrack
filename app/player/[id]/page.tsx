@@ -165,6 +165,15 @@ export default function PlayerDetailPage() {
     if (!coachProfile || !aiInput) return;
     setAiError(''); setAiGenerating(true);
 
+    // Rate limit: max 10 plans per player per month
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { count } = await supabase.from('ai_plans').select('*', { count: 'exact', head: true }).eq('player_id', playerId).gt('created_at', thirtyDaysAgo);
+    if (count && count >= 10) {
+      setAiError('Limit reached — 10 custom plans per player per month.');
+      setAiGenerating(false);
+      return;
+    }
+
     try {
       const recentObs = observations.slice(0, 5).map((o: any) => o.observation_text);
       const response = await fetch('/api/ai/generate-plan', {
