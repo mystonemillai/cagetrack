@@ -151,7 +151,7 @@ export default function SettingsPage() {
           return;
         }
         const { error: updateError } = await supabase.from('player_coaches').update({
-          player_id: players[0].id, status: 'active', connected_at: new Date().toISOString(),
+          player_id: players[0].id, status: 'pending_approval', connected_at: new Date().toISOString(),
         }).eq('id', invite.id);
         if (updateError) { setLinkError(updateError.message); setLinkLoading(false); return; }
         setLinkLoading(false);
@@ -315,7 +315,8 @@ export default function SettingsPage() {
             </div>
           )}
 
-          
+          {/* Sign Out */}
+          <button onClick={handleSignOut} className="w-full p-4 rounded-xl border border-red-500/20 text-red-400/60 hover:text-red-400 hover:border-red-500/40 transition-all text-sm">Sign Out</button>
 
           {/* Subscription - at bottom, not for coaches */}
           {!isCoach && (
@@ -324,9 +325,6 @@ export default function SettingsPage() {
               <SubscriptionSection players={players} />
             </div>
           )}
-          <Link href="/help" className="block w-full p-4 rounded-xl bg-navy-light border border-wheat/8 text-center text-sm text-offwhite/50 hover:text-wheat hover:border-wheat/20 transition-all">Help Center</Link>
-          {/* Sign Out */}
-          <button onClick={handleSignOut} className="w-full p-4 rounded-xl border border-red-500/20 text-red-400/60 hover:text-red-400 hover:border-red-500/40 transition-all text-sm">Sign Out</button>
         </div>
       </main>
 
