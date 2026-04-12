@@ -351,7 +351,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-sm font-semibold text-wheat">Upgrade to unlock all features</div>
-                <div className="text-xs text-offwhite/40 mt-0.5">Starting at $15/mo — AI plans, full drill library, and more</div>
+                <div className="text-xs text-offwhite/40 mt-0.5">Starting at $10/mo — AI plans, full drill library, and more</div>
               </div>
               <span className="text-wheat text-xs font-display tracking-wider">UPGRADE →</span>
             </div>
