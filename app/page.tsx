@@ -23,7 +23,7 @@ export default function LandingPage() {
           <span className="text-[#D4A96A]">EVERY COACH CONNECTED.</span>
         </h1>
         <p className="text-lg sm:text-xl text-[#F7F3ED]/50 max-w-2xl mx-auto mb-10 leading-relaxed">
-          Stop losing development notes in group chats and binders. CageTrack gives every player a unified profile where coaches log observations, assign drills, and create AI-powered development plans — all in one place.
+          Stop losing development notes in group chats and binders. CageTrack gives every player a unified profile where coaches log observations, assign drills, and create custom development plans — all in one place.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link href="/auth/signup" className="px-8 py-4 bg-[#D4A96A] text-[#1C2B35] font-display text-lg tracking-wider rounded-xl hover:bg-[#D4A96A]/90 transition-all hover:scale-[1.02]">Start Free Trial</Link>
@@ -47,7 +47,7 @@ export default function LandingPage() {
             </div>
             <div className="text-center">
               <div className="w-16 h-16 rounded-2xl bg-[#D4A96A]/10 flex items-center justify-center mx-auto mb-4 text-3xl">🧠</div>
-              <h3 className="font-display text-xl text-[#D4A96A] mb-2">AI DEVELOPMENT PLANS</h3>
+              <h3 className="font-display text-xl text-[#D4A96A] mb-2">CUSTOM DEVELOPMENT PLANS</h3>
               <p className="text-sm text-[#F7F3ED]/40 leading-relaxed">Coaches describe what they see. CageTrack AI creates targeted drill plans with progressions, coaching cues, and weekly timelines.</p>
             </div>
             <div className="text-center">
@@ -78,7 +78,7 @@ export default function LandingPage() {
           <div className="rounded-2xl bg-[#243540] border border-[#D4A96A]/10 p-6">
             <div className="font-display text-4xl text-[#D4A96A]/20 mb-3">03</div>
             <h3 className="font-display text-lg text-[#D4A96A] mb-2">TRACK DEVELOPMENT</h3>
-            <p className="text-sm text-[#F7F3ED]/40">Coaches log observations, assign drills from a 100+ drill library, and generate AI-powered development plans.</p>
+            <p className="text-sm text-[#F7F3ED]/40">Coaches log observations, assign drills from a 100+ drill library, and CageTrack can generate custom development plans.</p>
           </div>
           <div className="rounded-2xl bg-[#243540] border border-[#D4A96A]/10 p-6">
             <div className="font-display text-4xl text-[#D4A96A]/20 mb-3">04</div>
@@ -116,7 +116,7 @@ export default function LandingPage() {
               <div className="rounded-xl bg-[#1C2B35] border border-[#D4A96A]/8 p-5">
                 <div className="flex items-center gap-3 mb-2">
                   <span className="text-xl">🧠</span>
-                  <span className="font-display text-lg text-[#D4A96A]">AI CUSTOM PLANS</span>
+                  <span className="font-display text-lg text-[#D4A96A]">CUSTOM PLANS</span>
                 </div>
                 <p className="text-sm text-[#F7F3ED]/40">Describe what you&apos;re seeing. AI generates targeted drill plans with progressions and coaching cues.</p>
               </div>
@@ -147,7 +147,7 @@ export default function LandingPage() {
               <p>✓ Coaching profile &amp; directory listing</p>
               <p>✓ Log observations</p>
               <p>✓ Assign drills</p>
-              <p>✓ AI custom plans</p>
+              <p>✓ CageTrack custom plans</p>
               <p>✓ Messaging</p>
               <p>✓ Shareable profile link</p>
             </div>
@@ -162,7 +162,7 @@ export default function LandingPage() {
               <p>✓ Everything coaches get, plus:</p>
               <p>✓ Connect with unlimited coaches</p>
               <p>✓ Full development tracking</p>
-              <p>✓ AI custom plans</p>
+              <p>✓ CageTrack custom plans</p>
               <p>✓ Drill library access</p>
               <p>✓ 14-day free trial</p>
             </div>
@@ -196,7 +196,7 @@ export default function LandingPage() {
             <FAQItem q="Can my player have multiple coaches?" a="Yes. That's the whole point. Your hitting coach, pitching coach, head coach, and private instructor all contribute to the same player profile. Everyone sees the full picture." />
             <FAQItem q="What happens after the free trial?" a="After 14 days, your subscription starts at $10/month or $100/year. You can cancel anytime from your Settings page. Your coaches keep their accounts regardless." />
             <FAQItem q="Is my kid's data safe?" a="Yes. We use industry-standard encryption, row-level database security, and never sell data to third parties. Only connected coaches and family members can see a player's profile." />
-            <FAQItem q="Can I use CageTrack on my phone?" a="Yes. CageTrack works on any phone through your browser. You can also add it to your home screen and it works just like a native app." />
+            <FAQItem q="Can I use CageTrack on my phone?" a="Yes. CageTrack is available as a mobile app for iOS and Android. Download it from the App Store or Google Play." />
           </div>
         </div>
       </section>
@@ -204,7 +204,7 @@ export default function LandingPage() {
       {/* Final CTA */}
       <section className="px-6 py-24 max-w-4xl mx-auto text-center">
         <h2 className="font-display text-4xl sm:text-6xl text-[#F7F3ED] mb-6">TRACK DEVELOPMENT.<br /><span className="text-[#D4A96A]">NOT JUST STATS.</span></h2>
-        <p className="text-lg text-[#F7F3ED]/40 mb-10 max-w-xl mx-auto">Join the platform built for the way player development actually works — multiple coaches, one unified profile, AI-powered plans.</p>
+        <p className="text-lg text-[#F7F3ED]/40 mb-10 max-w-xl mx-auto">Join the platform built for the way player development actually works — multiple coaches, one unified profile, CageTrack custom plans.</p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link href="/auth/signup" className="px-8 py-4 bg-[#D4A96A] text-[#1C2B35] font-display text-lg tracking-wider rounded-xl hover:bg-[#D4A96A]/90 transition-all hover:scale-[1.02]">Start Your Free Trial</Link>
           <Link href="/auth/signup" className="px-8 py-4 bg-[#F7F3ED]/5 border border-[#F7F3ED]/10 text-[#F7F3ED] font-display text-lg tracking-wider rounded-xl hover:border-[#D4A96A]/30 transition-all">Sign Up as a Coach — Free</Link>
