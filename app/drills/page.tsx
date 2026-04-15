@@ -22,22 +22,42 @@ export default function DrillsPage() {
   const [sportFilter, setSportFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedDrill, setExpandedDrill] = useState<string | null>(null);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [showToolbox, setShowToolbox] = useState(false);
+  const [userId, setUserId] = useState('');
 
   useEffect(() => {
     async function loadData() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push('/auth/login'); return; }
+      setUserId(user.id);
 
       const { data } = await supabase.from('master_drills').select('*').eq('is_active', true).order('category').order('sort_order');
       setDrills(data || []);
+
+      const { data: favs } = await supabase.from('drill_favorites').select('master_drill_id').eq('user_id', user.id);
+      if (favs) setFavorites(favs.map((f: any) => f.master_drill_id).filter(Boolean));
+
       setLoading(false);
     }
     loadData();
   }, []);
 
+  async function toggleFavorite(drillId: string, e: React.MouseEvent) {
+    e.stopPropagation();
+    if (favorites.includes(drillId)) {
+      await supabase.from('drill_favorites').delete().eq('user_id', userId).eq('master_drill_id', drillId);
+      setFavorites(favorites.filter(f => f !== drillId));
+    } else {
+      await supabase.from('drill_favorites').insert({ user_id: userId, master_drill_id: drillId });
+      setFavorites([...favorites, drillId]);
+    }
+  }
+
   let filteredDrills = drills;
-  if (selectedCategory) filteredDrills = filteredDrills.filter(d => d.category === selectedCategory);
-  if (sportFilter !== 'All') filteredDrills = filteredDrills.filter(d => d.sport === sportFilter || d.sport === 'Both');
+  if (showToolbox) filteredDrills = filteredDrills.filter(d => favorites.includes(d.id));
+  if (selectedCategory && !showToolbox) filteredDrills = filteredDrills.filter(d => d.category === selectedCategory);
+  if (sportFilter !== 'All' && !showToolbox) filteredDrills = filteredDrills.filter(d => d.sport === sportFilter || d.sport === 'Both');
   if (searchQuery.length >= 2) filteredDrills = filteredDrills.filter(d => d.drill_name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   const categoryCounts = CATEGORIES.reduce((acc, cat) => {
@@ -71,10 +91,11 @@ export default function DrillsPage() {
         <div className="mb-6 space-y-3 animate-fade-in-delay-1">
           <input type="text" value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setSelectedCategory(''); }} className="w-full p-4 bg-navy-light border border-wheat/15 rounded-xl text-offwhite focus:border-wheat outline-none transition-colors text-base" placeholder="Search drills by name..." />
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             {['All', 'Baseball', 'Softball'].map((s) => (
-              <button key={s} onClick={() => setSportFilter(s)} className={`px-4 py-2 rounded-lg text-xs font-medium transition-all ${sportFilter === s ? 'bg-wheat text-navy' : 'bg-navy-light border border-wheat/10 text-offwhite/50 hover:border-wheat/25'}`}>{s}</button>
+              <button key={s} onClick={() => { setSportFilter(s); setShowToolbox(false); }} className={`px-4 py-2 rounded-lg text-xs font-medium transition-all ${sportFilter === s && !showToolbox ? 'bg-wheat text-navy' : 'bg-navy-light border border-wheat/10 text-offwhite/50 hover:border-wheat/25'}`}>{s}</button>
             ))}
+            <button onClick={() => setShowToolbox(!showToolbox)} className={`px-4 py-2 rounded-lg text-xs font-medium transition-all ${showToolbox ? 'bg-wheat text-navy' : 'bg-navy-light border border-wheat/10 text-offwhite/50 hover:border-wheat/25'}`}>⭐ My Toolbox ({favorites.length})</button>
             <span className="text-xs text-offwhite/30 self-center ml-2">{filteredDrills.length} drills</span>
           </div>
         </div>
@@ -108,7 +129,7 @@ export default function DrillsPage() {
                       <span className="text-[10px] text-offwhite/25">{drill.sets_reps}</span>
                     </div>
                   </div>
-                  <span className={`text-offwhite/20 text-xs transition-transform ${expandedDrill === drill.id ? 'rotate-90' : ''}`}>→</span>
+                  <div className="flex items-center gap-2"><button onClick={(e) => toggleFavorite(drill.id, e)} className={`text-sm ${favorites.includes(drill.id) ? 'text-yellow-400' : 'text-offwhite/15 hover:text-yellow-400/50'} transition-colors`}>{favorites.includes(drill.id) ? '★' : '☆'}</button><span className={`text-offwhite/20 text-xs transition-transform ${expandedDrill === drill.id ? 'rotate-90' : ''}`}>→</span></div>
                 </div>
                 {expandedDrill === drill.id && (
                   <div className="mt-3 pt-3 border-t border-wheat/5 animate-fade-in">
@@ -144,7 +165,7 @@ export default function DrillsPage() {
                               <span className="text-[10px] text-offwhite/25">{drill.sets_reps}</span>
                             </div>
                           </div>
-                          <span className={`text-offwhite/20 text-xs transition-transform ${expandedDrill === drill.id ? 'rotate-90' : ''}`}>→</span>
+                          <div className="flex items-center gap-2"><button onClick={(e) => toggleFavorite(drill.id, e)} className={`text-sm ${favorites.includes(drill.id) ? 'text-yellow-400' : 'text-offwhite/15 hover:text-yellow-400/50'} transition-colors`}>{favorites.includes(drill.id) ? '★' : '☆'}</button><span className={`text-offwhite/20 text-xs transition-transform ${expandedDrill === drill.id ? 'rotate-90' : ''}`}>→</span></div>
                         </div>
                         {expandedDrill === drill.id && (
                           <div className="mt-3 pt-3 border-t border-wheat/5 animate-fade-in">
