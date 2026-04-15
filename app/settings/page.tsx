@@ -209,6 +209,14 @@ export default function SettingsPage() {
 
           {/* === PLAYER/PARENT CODE SECTIONS === */}
 
+          {/* Show message if no player yet */}
+          {(isPlayer || isFamily) && players.length === 0 && (
+            <div className="rounded-xl bg-navy-light border border-wheat/8 p-6 text-center">
+              <p className="text-sm text-offwhite/40 mb-3">Create a player profile to generate invite codes for coaches and family members.</p>
+              <a href="/dashboard" className="inline-block px-5 py-2 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors">Go to Dashboard</a>
+            </div>
+          )}
+
           {/* Invite Parent / Invite Player (for players and parents with players) */}
           {(isPlayer || isFamily) && players.length > 0 && (
             <div className="rounded-xl bg-navy-light border border-wheat/8 p-6">
@@ -315,17 +323,18 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* Subscription - at bottom, not for coaches */}
+          <Link href="/help" className="block w-full p-4 rounded-xl bg-navy-light border border-wheat/8 text-center text-sm text-offwhite/50 hover:text-wheat hover:border-wheat/20 transition-all">Help Center</Link>
+
+          {/* Subscription - not for coaches */}
           {!isCoach && (
             <div className="rounded-xl bg-navy-light border border-wheat/8 p-6">
               <h2 className="font-display text-lg text-wheat mb-3">Subscription</h2>
               <SubscriptionSection players={players} />
             </div>
           )}
-          <Link href="/help" className="block w-full p-4 rounded-xl bg-navy-light border border-wheat/8 text-center text-sm text-offwhite/50 hover:text-wheat hover:border-wheat/20 transition-all">Help Center</Link>
-          {/* Sign Out */}
-          <button onClick={handleSignOut} className="w-full p-4 rounded-xl border border-red-500/20 text-red-400/60 hover:text-red-400 hover:border-red-500/40 transition-all text-sm">Sign Out</button>
 
+          {/* Sign Out - always last */}
+          <button onClick={handleSignOut} className="w-full p-4 rounded-xl border border-red-500/20 text-red-400/60 hover:text-red-400 hover:border-red-500/40 transition-all text-sm">Sign Out</button>
         </div>
       </main>
 
