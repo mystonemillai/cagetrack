@@ -69,21 +69,22 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
           setHasSubscription(true);
         } else {
           // Check if any linked family member has a subscription
-          // If I'm a player, check if my parent is subscribed
-          const { data: myParentLinks } = await supabase.from('parent_links').select('parent_user_id').eq('status', 'active');
-          if (myParentLinks && myParentLinks.length > 0) {
-            const parentIds = myParentLinks.map((pl: any) => pl.parent_user_id).filter(Boolean);
-            if (parentIds.length > 0) {
-              const { data: familySub } = await supabase.from('subscriptions').select('id').in('billing_user_id', parentIds).eq('status', 'active').limit(1);
-              if (familySub && familySub.length > 0) setHasSubscription(true);
+          const { data: allLinks } = await supabase.from('parent_links').select('parent_user_id, player_id').eq('status', 'active');
+          const familyUserIds: string[] = [];
+          if (allLinks) {
+            allLinks.forEach((link: any) => {
+              if (link.parent_user_id) familyUserIds.push(link.parent_user_id);
+            });
+            // Also check player owners
+            if (allPlayers.length > 0) {
+              allPlayers.forEach((p: any) => { if (p.owner_user_id) familyUserIds.push(p.owner_user_id); });
             }
           }
-          // If I'm a parent, check if any of my players' owners are subscribed
-          if (!sub && allPlayers.length > 0) {
-            const ownerIds = allPlayers.map((p: any) => p.owner_user_id).filter(Boolean);
-            if (ownerIds.length > 0) {
-              const { data: ownerSub } = await supabase.from('subscriptions').select('id').in('billing_user_id', ownerIds).eq('status', 'active').limit(1);
-              if (ownerSub && ownerSub.length > 0) setHasSubscription(true);
+          if (familyUserIds.length > 0) {
+            const uniqueIds = [...new Set(familyUserIds)].filter(id => id !== userId);
+            if (uniqueIds.length > 0) {
+              const { data: familySub } = await supabase.from('subscriptions').select('id').in('billing_user_id', uniqueIds).eq('status', 'active').limit(1);
+              if (familySub && familySub.length > 0) setHasSubscription(true);
             }
           }
         }
