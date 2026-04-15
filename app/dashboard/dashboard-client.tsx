@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-browser';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { initStatusBar, initPushNotifications, hapticTap } from '@/lib/native';
 
 interface DashboardClientProps {
   profile: any;
@@ -128,7 +129,11 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
 
       // Update last_seen_at
       await supabase.from('profiles').update({ last_seen_at: new Date().toISOString() }).eq('id', userId);
-
+     // Init native features
+      initStatusBar();
+      initPushNotifications(async (token) => {
+        await supabase.from('push_tokens').upsert({ user_id: userId, token, platform: 'ios' }, { onConflict: 'user_id,token' });
+      });
       setDataLoaded(true);
     }
     loadData();
