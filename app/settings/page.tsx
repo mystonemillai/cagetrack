@@ -387,24 +387,26 @@ function SubscriptionSection({ players }: { players: any[] }) {
   const [subscription, setSubscription] = useState<any>(null);
   const [checkingOut, setCheckingOut] = useState('');
   const [loaded, setLoaded] = useState(false);
+  const [isOwnSub, setIsOwnSub] = useState(false);
 
   useEffect(() => {
     async function loadSub() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       let { data } = await supabase.from('subscriptions').select('*').eq('billing_user_id', user.id).eq('status', 'active').single();
-      if (!data) {
-        // Check family subscriptions
-        const { data: allLinks } = await supabase.from('parent_links').select('parent_user_id, player_id').eq('status', 'active');
+      if (data) {
+        setSubscription(data);
+        setIsOwnSub(true);
+      } else {
+        const { data: allLinks } = await supabase.from('parent_links').select('parent_user_id').eq('status', 'active');
         const familyIds: string[] = [];
         if (allLinks) allLinks.forEach((link: any) => { if (link.parent_user_id) familyIds.push(link.parent_user_id); });
         const uniqueIds = familyIds.filter((id, i) => id !== user.id && familyIds.indexOf(id) === i);
         if (uniqueIds.length > 0) {
           const { data: familySub } = await supabase.from('subscriptions').select('*').in('billing_user_id', uniqueIds).eq('status', 'active').limit(1);
-          if (familySub && familySub.length > 0) data = familySub[0];
+          if (familySub && familySub.length > 0) { setSubscription(familySub[0]); setIsOwnSub(false); }
         }
       }
-      setSubscription(data);
       setLoaded(true);
     }
     loadSub();
@@ -444,7 +446,8 @@ function SubscriptionSection({ players }: { players: any[] }) {
         <p className="text-xs text-offwhite/30 mb-3">
           {subscription.current_period_end ? `Renews ${new Date(subscription.current_period_end).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}` : 'Active subscription'}
         </p>
-        <button onClick={handleManageSub} className="text-xs text-wheat hover:underline">Manage Subscription →</button>
+        <button onClick={handleManageSub} className="text-xs text-wheat hover:underline">{isOwnSub ? 'Manage Subscription →' : ''}</button>
+        {!isOwnSub && <p className="text-xs text-offwhite/30">Subscribed through family plan</p>}
       </div>
     );
   }
