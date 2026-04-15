@@ -322,7 +322,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
             <div className="space-y-2">
               {notifications.slice(0, 5).map((n, i) => (
                 <div key={i} className="flex items-start gap-2">
-                  <span className="text-xs mt-0.5">{n.type === 'observation' ? '👁️' : n.type === 'drill' ? '📋' : n.type === 'ai' ? '🧠' : n.type === 'connection' ? '🤝' : n.type === 'session' ? '📝' : '💬'}
+                  <span className="text-xs mt-0.5">{n.type === 'observation' ? '👁️' : n.type === 'drill' ? '📋' : n.type === 'ai' ? '🧠' : n.type === 'connection' ? '🤝' : n.type === 'session' ? '📝' : '💬'}</span>
                   <span className="text-xs text-offwhite/60">{n.text}</span>
                 </div>
               ))}
