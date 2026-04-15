@@ -1,5 +1,3 @@
-import { Capacitor } from '@capacitor/core';
-
 // Check if running as native app
 export const isNative = Capacitor.isNativePlatform();
 
