@@ -74,7 +74,17 @@ export default function CoachDirectoryPage() {
       }
 
       const { data: sub } = await supabase.from('subscriptions').select('id').eq('billing_user_id', user.id).eq('status', 'active').single();
-      setHasSubscription(!!sub);
+      if (sub) {
+        setHasSubscription(true);
+      } else {
+        // Check family subscriptions
+        const { data: familyLinks } = await supabase.from('parent_links').select('parent_user_id, player_id').eq('status', 'active');
+        if (familyLinks && familyLinks.length > 0) {
+          const familyUserIds = [...familyLinks.map((fl: any) => fl.parent_user_id), ...allPlayers.map((p: any) => p.owner_user_id)].filter(Boolean);
+          const { data: familySub } = await supabase.from('subscriptions').select('id').in('billing_user_id', familyUserIds).eq('status', 'active').limit(1);
+          if (familySub && familySub.length > 0) setHasSubscription(true);
+        }
+      }
 
       const { data: coachData } = await supabase
         .from('coach_profiles')
