@@ -81,7 +81,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
             }
           }
           if (familyUserIds.length > 0) {
-            const uniqueIds = [...new Set(familyUserIds)].filter(id => id !== userId);
+            const uniqueIds = familyUserIds.filter((id, i) => id !== userId && familyUserIds.indexOf(id) === i);
             if (uniqueIds.length > 0) {
               const { data: familySub } = await supabase.from('subscriptions').select('id').in('billing_user_id', uniqueIds).eq('status', 'active').limit(1);
               if (familySub && familySub.length > 0) setHasSubscription(true);
