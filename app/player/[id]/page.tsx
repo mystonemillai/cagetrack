@@ -43,6 +43,15 @@ export default function PlayerDetailPage() {
   const [showAssignNote, setShowAssignNote] = useState<string | null>(null);
   const [drillSource, setDrillSource] = useState('master');
   const [myDrills, setMyDrills] = useState<any[]>([]);
+
+  // Session Reports
+  const [sessionWorkedOn, setSessionWorkedOn] = useState('');
+  const [sessionImproved, setSessionImproved] = useState('');
+  const [sessionFocusNext, setSessionFocusNext] = useState('');
+  const [sessionNotes, setSessionNotes] = useState('');
+  const [sessionGenerating, setSessionGenerating] = useState(false);
+  const [sessionError, setSessionError] = useState('');
+  const [sessionReports, setSessionReports] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [msgText, setMsgText] = useState('');
   const [msgSending, setMsgSending] = useState(false);
@@ -82,6 +91,9 @@ export default function PlayerDetailPage() {
 
       const { data: pCoaches } = await supabase.from('player_coaches').select('*, coach_profiles(id, display_name, specialty, specialties, profiles(avatar_url))').eq('player_id', playerId).eq('status', 'active');
       setPlayerCoaches(pCoaches || []);
+
+      const { data: reports } = await supabase.from('session_reports').select('*').eq('player_id', playerId).order('created_at', { ascending: false });
+      setSessionReports(reports || []);
 
       setLoading(false);
     }
@@ -206,6 +218,53 @@ export default function PlayerDetailPage() {
     }
   }
 
+  async function handleGenerateSessionReport(e: React.FormEvent) {
+    e.preventDefault();
+    if (!coachProfile || !sessionWorkedOn) return;
+    setSessionError(''); setSessionGenerating(true);
+
+    try {
+      const response = await fetch('/api/ai/session-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          coachName: coachProfile.display_name,
+          playerName: player?.first_name || 'Player',
+          ageGroup: player?.age_group,
+          sport: player?.sport,
+          positions: player?.positions?.join(', '),
+          workedOn: sessionWorkedOn,
+          improved: sessionImproved,
+          focusNext: sessionFocusNext,
+          sessionNotes: sessionNotes,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.error) { setSessionError(data.error); setSessionGenerating(false); return; }
+
+      const { error: saveError } = await supabase.from('session_reports').insert({
+        player_id: playerId,
+        coach_profile_id: coachProfile.id,
+        coach_name: coachProfile.display_name,
+        worked_on: sessionWorkedOn,
+        improved: sessionImproved,
+        focus_next: sessionFocusNext,
+        notes: sessionNotes,
+        report_text: data.report,
+      });
+
+      if (saveError) { setSessionError(saveError.message); setSessionGenerating(false); return; }
+
+      setSessionWorkedOn(''); setSessionImproved(''); setSessionFocusNext(''); setSessionNotes('');
+      setSessionGenerating(false);
+      window.location.reload();
+    } catch (err: any) {
+      setSessionError(err.message);
+      setSessionGenerating(false);
+    }
+  }
+
   async function handleDisconnectCoach(connectionId: string) {
     if (!confirm('Disconnect from this coach?')) return;
     await supabase.from('player_coaches').delete().eq('id', connectionId);
@@ -278,7 +337,7 @@ export default function PlayerDetailPage() {
         {activeTab === 'overview' && (
           <div className="space-y-4">
             {isCoach && (
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <button onClick={() => setActiveTab('observations')} className="rounded-xl bg-wheat/10 border border-wheat/20 p-4 text-center hover:border-wheat/30 transition-all">
                   <div className="text-xl mb-1">👁️</div><div className="text-[10px] text-wheat uppercase tracking-wider">Add Observation</div>
                 </button>
@@ -287,6 +346,9 @@ export default function PlayerDetailPage() {
                 </button>
                 <button onClick={() => setActiveTab('ai-plans')} className="rounded-xl bg-wheat/10 border border-wheat/20 p-4 text-center hover:border-wheat/30 transition-all">
                   <div className="text-xl mb-1">🧠</div><div className="text-[10px] text-wheat uppercase tracking-wider">Custom Plan</div>
+                </button>
+                <button onClick={() => setActiveTab('session-report')} className="rounded-xl bg-wheat/10 border border-wheat/20 p-4 text-center hover:border-wheat/30 transition-all">
+                  <div className="text-xl mb-1">📝</div><div className="text-[10px] text-wheat uppercase tracking-wider">Log Session</div>
                 </button>
               </div>
             )}
@@ -307,6 +369,10 @@ export default function PlayerDetailPage() {
               <button onClick={() => setActiveTab('messages')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all">
                 <div className="font-display text-2xl text-wheat">{messages.length}</div>
                 <div className="text-[10px] text-offwhite/40 uppercase tracking-wider mt-1">Messages</div>
+              </button>
+              <button onClick={() => setActiveTab('session-report')} className="rounded-xl bg-navy-light border border-wheat/8 p-4 text-center hover:border-wheat/20 transition-all col-span-2">
+                <div className="font-display text-2xl text-wheat">{sessionReports.length}</div>
+                <div className="text-[10px] text-offwhite/40 uppercase tracking-wider mt-1">Session Reports</div>
               </button>
             </div>
 
@@ -573,6 +639,58 @@ export default function PlayerDetailPage() {
                 <button type="submit" disabled={msgSending || !msgText.trim()} className="px-5 py-3 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors disabled:opacity-50">{msgSending ? '...' : 'Send'}</button>
               </form>
             </div>
+          </div>
+        )}
+
+        {activeTab === 'session-report' && (
+          <div className="space-y-4">
+            {isCoach && (
+              <div className="rounded-xl bg-navy-light border border-wheat/10 p-6">
+                <h3 className="font-display text-lg text-wheat mb-3">Log Session Report</h3>
+                <p className="text-xs text-offwhite/40 mb-4">Fill out the details and we&apos;ll generate a polished report for the player&apos;s family.</p>
+                <form onSubmit={handleGenerateSessionReport} className="space-y-3">
+                  <div>
+                    <label className="block text-xs uppercase tracking-widest text-offwhite/40 mb-2">What did you work on? *</label>
+                    <textarea value={sessionWorkedOn} onChange={(e) => setSessionWorkedOn(e.target.value)} rows={2} required className="w-full p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors resize-none" placeholder="e.g. Inside pitch approach, keeping hands back, driving through the ball..." />
+                  </div>
+                  <div>
+                    <label className="block text-xs uppercase tracking-widest text-offwhite/40 mb-2">What improved?</label>
+                    <textarea value={sessionImproved} onChange={(e) => setSessionImproved(e.target.value)} rows={2} className="w-full p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors resize-none" placeholder="e.g. Started recognizing the inside pitch earlier, bat path was much tighter..." />
+                  </div>
+                  <div>
+                    <label className="block text-xs uppercase tracking-widest text-offwhite/40 mb-2">What to focus on before next session?</label>
+                    <textarea value={sessionFocusNext} onChange={(e) => setSessionFocusNext(e.target.value)} rows={2} className="w-full p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors resize-none" placeholder="e.g. 50 tee swings per day focusing on inside pitch, watch video I sent..." />
+                  </div>
+                  <div>
+                    <label className="block text-xs uppercase tracking-widest text-offwhite/40 mb-2">Additional notes</label>
+                    <textarea value={sessionNotes} onChange={(e) => setSessionNotes(e.target.value)} rows={2} className="w-full p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors resize-none" placeholder="Anything else you want to include..." />
+                  </div>
+                  {sessionError && <p className="text-red-400 text-xs">{sessionError}</p>}
+                  <button type="submit" disabled={sessionGenerating || !sessionWorkedOn} className="px-6 py-3 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors disabled:opacity-50 w-full">
+                    {sessionGenerating ? 'Generating Report...' : 'Generate Session Report'}
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {sessionReports.length === 0 && !isCoach ? (
+              <div className="text-center py-8 text-offwhite/30 text-sm">No session reports yet. Your coach will log reports after each session.</div>
+            ) : (
+              <div className="space-y-4">
+                {sessionReports.map((report) => (
+                  <div key={report.id} className="rounded-xl bg-navy-light border border-wheat/8 p-6">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">📝</span>
+                        <span className="text-sm font-medium text-wheat">{report.coach_name || 'Coach'}</span>
+                      </div>
+                      <span className="text-[10px] text-offwhite/30">{new Date(report.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                    </div>
+                    <div className="text-sm text-offwhite/60 leading-relaxed whitespace-pre-wrap">{report.report_text}</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
