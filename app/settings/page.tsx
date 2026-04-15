@@ -392,7 +392,18 @@ function SubscriptionSection({ players }: { players: any[] }) {
     async function loadSub() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { data } = await supabase.from('subscriptions').select('*').eq('billing_user_id', user.id).eq('status', 'active').single();
+      let { data } = await supabase.from('subscriptions').select('*').eq('billing_user_id', user.id).eq('status', 'active').single();
+      if (!data) {
+        // Check family subscriptions
+        const { data: allLinks } = await supabase.from('parent_links').select('parent_user_id, player_id').eq('status', 'active');
+        const familyIds: string[] = [];
+        if (allLinks) allLinks.forEach((link: any) => { if (link.parent_user_id) familyIds.push(link.parent_user_id); });
+        const uniqueIds = familyIds.filter((id, i) => id !== user.id && familyIds.indexOf(id) === i);
+        if (uniqueIds.length > 0) {
+          const { data: familySub } = await supabase.from('subscriptions').select('*').in('billing_user_id', uniqueIds).eq('status', 'active').limit(1);
+          if (familySub && familySub.length > 0) data = familySub[0];
+        }
+      }
       setSubscription(data);
       setLoaded(true);
     }
