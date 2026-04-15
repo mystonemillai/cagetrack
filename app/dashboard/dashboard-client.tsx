@@ -63,8 +63,30 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
       setOwnedPlayers(allPlayers);
 
       if (!isCoach) {
+        // Check own subscription first
         const { data: sub } = await supabase.from('subscriptions').select('id').eq('billing_user_id', userId).eq('status', 'active').single();
-        setHasSubscription(!!sub);
+        if (sub) {
+          setHasSubscription(true);
+        } else {
+          // Check if any linked family member has a subscription
+          // If I'm a player, check if my parent is subscribed
+          const { data: myParentLinks } = await supabase.from('parent_links').select('parent_user_id').eq('status', 'active');
+          if (myParentLinks && myParentLinks.length > 0) {
+            const parentIds = myParentLinks.map((pl: any) => pl.parent_user_id).filter(Boolean);
+            if (parentIds.length > 0) {
+              const { data: familySub } = await supabase.from('subscriptions').select('id').in('billing_user_id', parentIds).eq('status', 'active').limit(1);
+              if (familySub && familySub.length > 0) setHasSubscription(true);
+            }
+          }
+          // If I'm a parent, check if any of my players' owners are subscribed
+          if (!sub && allPlayers.length > 0) {
+            const ownerIds = allPlayers.map((p: any) => p.owner_user_id).filter(Boolean);
+            if (ownerIds.length > 0) {
+              const { data: ownerSub } = await supabase.from('subscriptions').select('id').in('billing_user_id', ownerIds).eq('status', 'active').limit(1);
+              if (ownerSub && ownerSub.length > 0) setHasSubscription(true);
+            }
+          }
+        }
       }
 
       if (isCoach) {
@@ -110,13 +132,19 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
         const { data: newConnections } = await supabase.from('player_coaches').select('*, coach_profiles(display_name)').in('player_id', playerIds).eq('status', 'active').gt('connected_at', lastSeen);
         if (!isCoach && newConnections) newConnections.forEach(c => notifs.push({ type: 'connection', text: `${c.coach_profiles?.display_name || 'A coach'} accepted your connection request!`, date: c.connected_at }));
 
-        // New session reports
+        // Session report notifications
         const { data: newReports } = await supabase.from('session_reports').select('*, players(first_name)').in('player_id', playerIds).gt('created_at', lastSeen);
         if (!isCoach && newReports) newReports.forEach(r => notifs.push({ type: 'session', text: `${r.coach_name || 'A coach'} logged a session report for ${r.players?.first_name || 'your player'}`, date: r.created_at }));
 
         notifs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         setNotifications(notifs);
       }
+
+      // Init native features
+      initStatusBar();
+      initPushNotifications(async (token) => {
+        await supabase.from('push_tokens').upsert({ user_id: userId, token, platform: 'ios' }, { onConflict: 'user_id,token' });
+      });
 
       // Coach referral check
       if (typeof window !== 'undefined' && !isCoach) {
@@ -129,11 +157,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
 
       // Update last_seen_at
       await supabase.from('profiles').update({ last_seen_at: new Date().toISOString() }).eq('id', userId);
-     // Init native features
-      initStatusBar();
-      initPushNotifications(async (token) => {
-        await supabase.from('push_tokens').upsert({ user_id: userId, token, platform: 'ios' }, { onConflict: 'user_id,token' });
-      });
+
       setDataLoaded(true);
     }
     loadData();
@@ -142,7 +166,6 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
   const hasPlayers = ownedPlayers.length > 0;
 
   async function handleSignOut() {
-    hapticTap();
     await supabase.auth.signOut();
     router.push('/');
   }
@@ -441,7 +464,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
                     </div>
                   </div>
                   <div className="flex gap-3">
-                    <button onClick={async () => { const { nativeShare } = await import('@/lib/native'); const result = await nativeShare('CageTrack Coach Profile', `Check out my coaching profile on CageTrack`, `https://cagetrack.com/coach/${coachProfile.id}`); if (result.copied) alert('Profile link copied!'); }} className="text-xs text-wheat hover:underline">Share</button>
+                    <button onClick={() => { navigator.clipboard.writeText(`https://cagetrack.com/coach/${coachProfile.id}`); alert('Profile link copied!'); }} className="text-xs text-wheat hover:underline">Share</button>
                     <Link href="/coach-setup" className="text-xs text-offwhite/30 hover:text-wheat transition-colors">Edit</Link>
                   </div>
                 </div>
