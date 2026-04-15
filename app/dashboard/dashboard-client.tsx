@@ -142,6 +142,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
   const hasPlayers = ownedPlayers.length > 0;
 
   async function handleSignOut() {
+    hapticTap();
     await supabase.auth.signOut();
     router.push('/');
   }
