@@ -111,7 +111,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
 
         // New session reports
         const { data: newReports } = await supabase.from('session_reports').select('*, players(first_name)').in('player_id', playerIds).gt('created_at', lastSeen);
-        if (newReports) newReports.forEach(r => notifs.push({ type: 'session', text: `${r.coach_name || 'A coach'} logged a session report for ${r.players?.first_name || 'your player'}`, date: r.created_at }));
+        if (!isCoach && newReports) newReports.forEach(r => notifs.push({ type: 'session', text: `${r.coach_name || 'A coach'} logged a session report for ${r.players?.first_name || 'your player'}`, date: r.created_at }));
 
         notifs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         setNotifications(notifs);
