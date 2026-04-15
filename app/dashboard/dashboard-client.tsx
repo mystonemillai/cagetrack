@@ -109,6 +109,10 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
         const { data: newConnections } = await supabase.from('player_coaches').select('*, coach_profiles(display_name)').in('player_id', playerIds).eq('status', 'active').gt('connected_at', lastSeen);
         if (!isCoach && newConnections) newConnections.forEach(c => notifs.push({ type: 'connection', text: `${c.coach_profiles?.display_name || 'A coach'} accepted your connection request!`, date: c.connected_at }));
 
+        // New session reports
+        const { data: newReports } = await supabase.from('session_reports').select('*, players(first_name)').in('player_id', playerIds).gt('created_at', lastSeen);
+        if (newReports) newReports.forEach(r => notifs.push({ type: 'session', text: `${r.coach_name || 'A coach'} logged a session report for ${r.players?.first_name || 'your player'}`, date: r.created_at }));
+
         notifs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         setNotifications(notifs);
       }
@@ -318,7 +322,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
             <div className="space-y-2">
               {notifications.slice(0, 5).map((n, i) => (
                 <div key={i} className="flex items-start gap-2">
-                  <span className="text-xs mt-0.5">{n.type === 'observation' ? '👁️' : n.type === 'drill' ? '📋' : n.type === 'ai' ? '🧠' : n.type === 'connection' ? '🤝' : '💬'}</span>
+                  <span className="text-xs mt-0.5">{n.type === 'observation' ? '👁️' : n.type === 'drill' ? '📋' : n.type === 'ai' ? '🧠' : n.type === 'connection' ? '🤝' : n.type === 'session' ? '📝' : '💬'}
                   <span className="text-xs text-offwhite/60">{n.text}</span>
                 </div>
               ))}
