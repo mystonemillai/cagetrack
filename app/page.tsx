@@ -95,7 +95,7 @@ export default function LandingPage() {
             <div>
               <div className="inline-block px-3 py-1 rounded-full bg-[#D4A96A]/10 border border-[#D4A96A]/20 text-[#D4A96A] text-xs font-medium tracking-wider uppercase mb-6">For Coaches</div>
               <h2 className="font-display text-4xl sm:text-5xl text-[#F7F3ED] mb-6">ALWAYS FREE.<br />ZERO CATCH.</h2>
-              <p className="text-[#F7F3ED]/50 mb-6 leading-relaxed">CageTrack is free for coaches — forever. Build your coaching profile, get discovered in our directory, track your players&apos; development, and look like a pro. Your players&apos; families subscribe. You never pay.</p>
+              <p className="text-[#F7F3ED]/50 mb-6 leading-relaxed">CageTrack is free for coaches — forever. You're the ones putting in the hours, pouring into these kids, and shaping the next generation of players. Great coaches are the backbone of player development, and we built CageTrack to give you the tools to do what you already do — better, faster, and more organized. Build your coaching profile, get discovered in our directory, and track every player you work with.</p>
               <Link href="/auth/signup" className="inline-block px-6 py-3 bg-[#D4A96A] text-[#1C2B35] font-display text-sm tracking-wider rounded-xl hover:bg-[#D4A96A]/90 transition-all">Sign Up as a Coach</Link>
             </div>
             <div className="space-y-4">
@@ -192,7 +192,7 @@ export default function LandingPage() {
           <h2 className="font-display text-4xl sm:text-5xl text-[#F7F3ED] text-center mb-12">QUESTIONS</h2>
           <div className="space-y-4">
             <FAQItem q="What ages is CageTrack for?" a="CageTrack is designed for baseball and softball players ages 8U through 18U." />
-            <FAQItem q="Why is it free for coaches?" a="Coaches are the backbone of player development. By keeping CageTrack free for coaches, we make it easy for them to adopt the platform and bring their players along. Coaches bring families. Families subscribe." />
+            <FAQItem q="Why is it free for coaches?" a="Coaches are the backbone of player development. The hours you put in, the lessons you give, the advice you share — that's what builds great players. We built CageTrack to make the coach's job easier, not harder. Keeping it free means every coach can use it, contribute to their players' development, and focus on what matters — coaching." />
             <FAQItem q="Can my player have multiple coaches?" a="Yes. That's the whole point. Your hitting coach, pitching coach, head coach, and private instructor all contribute to the same player profile. Everyone sees the full picture." />
             <FAQItem q="What happens after the free trial?" a="After 14 days, your subscription starts at $10/month or $100/year. You can cancel anytime from your Settings page. Your coaches keep their accounts regardless." />
             <FAQItem q="Is my kid's data safe?" a="Yes. We use industry-standard encryption, row-level database security, and never sell data to third parties. Only connected coaches and family members can see a player's profile." />
