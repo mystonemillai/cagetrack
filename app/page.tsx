@@ -150,7 +150,7 @@ export default function LandingPage() {
             <div className="font-display text-lg text-[#F7F3ED]/40 mb-4">COACH</div>
             <div className="font-display text-5xl text-[#D4A96A] mb-2">FREE</div>
             <div className="text-sm text-[#F7F3ED]/30 mb-6">Forever</div>
-            <div className="space-y-2 text-sm text-[#F7F3ED]/50 text-left mb-8">
+            <div className="space-y-2 text-sm text-[#F7F3ED]/50 text-left mb-8 min-h-[180px]">
               <p>✓ Coaching profile &amp; directory listing</p>
               <p>✓ Log observations</p>
               <p>✓ Assign drills</p>
@@ -165,7 +165,7 @@ export default function LandingPage() {
             <div className="font-display text-lg text-[#F7F3ED]/40 mb-4">MONTHLY</div>
             <div className="font-display text-5xl text-[#D4A96A] mb-2">$10</div>
             <div className="text-sm text-[#F7F3ED]/30 mb-6">per month</div>
-            <div className="space-y-2 text-sm text-[#F7F3ED]/50 text-left mb-8">
+            <div className="space-y-2 text-sm text-[#F7F3ED]/50 text-left mb-8 min-h-[180px]">
               <p>✓ Everything coaches get, plus:</p>
               <p>✓ Connect with unlimited coaches</p>
               <p>✓ Full development tracking</p>
@@ -181,7 +181,7 @@ export default function LandingPage() {
             <div className="font-display text-lg text-[#F7F3ED]/40 mb-4">ANNUAL</div>
             <div className="font-display text-5xl text-[#D4A96A] mb-2">$100</div>
             <div className="text-sm text-[#F7F3ED]/30 mb-6">per year</div>
-            <div className="space-y-2 text-sm text-[#F7F3ED]/50 text-left mb-8">
+            <div className="space-y-2 text-sm text-[#F7F3ED]/50 text-left mb-8 min-h-[180px]">
               <p>✓ Everything in Monthly</p>
               <p>✓ Save $20 per year</p>
               <p>✓ Lock in your rate</p>
