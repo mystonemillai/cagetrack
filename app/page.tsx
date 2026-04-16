@@ -23,7 +23,7 @@ export default function LandingPage() {
           <span className="text-[#D4A96A]">EVERY COACH CONNECTED.</span>
         </h1>
         <p className="text-lg sm:text-xl text-[#F7F3ED]/50 max-w-2xl mx-auto mb-10 leading-relaxed">
-          Stop losing development notes in group chats and binders. CageTrack gives every player a unified profile where coaches log observations, assign drills, and create custom development plans — all in one place.
+          Stop losing development notes in group chats and binders. CageTrack gives every player a unified profile where coaches log observations, assign drills, create custom development plans, and send session reports to families — all in one place.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link href="/auth/signup" className="px-8 py-4 bg-[#D4A96A] text-[#1C2B35] font-display text-lg tracking-wider rounded-xl hover:bg-[#D4A96A]/90 transition-all hover:scale-[1.02]">Start Free Trial</Link>
@@ -52,8 +52,8 @@ export default function LandingPage() {
             </div>
             <div className="text-center">
               <div className="w-16 h-16 rounded-2xl bg-[#D4A96A]/10 flex items-center justify-center mx-auto mb-4 text-3xl">🤝</div>
-              <h3 className="font-display text-xl text-[#D4A96A] mb-2">CONNECTED ECOSYSTEM</h3>
-              <p className="text-sm text-[#F7F3ED]/40 leading-relaxed">Head coach, private instructor, parent — everyone sees the same development picture. One player, one story.</p>
+              <h3 className="font-display text-xl text-[#D4A96A] mb-2">SESSION REPORTS</h3>
+              <p className="text-sm text-[#F7F3ED]/40 leading-relaxed">After every lesson, coaches send polished session reports directly to families. What was worked on, what improved, and what to focus on next.</p>
             </div>
           </div>
         </div>
@@ -73,12 +73,12 @@ export default function LandingPage() {
           <div className="rounded-2xl bg-[#243540] border border-[#D4A96A]/10 p-6">
             <div className="font-display text-4xl text-[#D4A96A]/20 mb-3">02</div>
             <h3 className="font-display text-lg text-[#D4A96A] mb-2">CONNECT COACHES</h3>
-            <p className="text-sm text-[#F7F3ED]/40">Find coaches in your area or invite them with a code. Connect as many coaches as you need — hitting, pitching, fielding.</p>
+            <p className="text-sm text-[#F7F3ED]/40">Search for coaches by distance and specialty, or invite them with a code. Connect as many coaches as you need — hitting, pitching, fielding.</p>
           </div>
           <div className="rounded-2xl bg-[#243540] border border-[#D4A96A]/10 p-6">
             <div className="font-display text-4xl text-[#D4A96A]/20 mb-3">03</div>
             <h3 className="font-display text-lg text-[#D4A96A] mb-2">TRACK DEVELOPMENT</h3>
-            <p className="text-sm text-[#F7F3ED]/40">Coaches log observations, assign drills from a 100+ drill library, and CageTrack can generate custom development plans.</p>
+            <p className="text-sm text-[#F7F3ED]/40">Coaches log observations, assign drills from a 100+ drill library, generate custom development plans, and send session reports to families.</p>
           </div>
           <div className="rounded-2xl bg-[#243540] border border-[#D4A96A]/10 p-6">
             <div className="font-display text-4xl text-[#D4A96A]/20 mb-3">04</div>
@@ -119,6 +119,13 @@ export default function LandingPage() {
                   <span className="font-display text-lg text-[#D4A96A]">CUSTOM PLANS</span>
                 </div>
                 <p className="text-sm text-[#F7F3ED]/40">Describe what you&apos;re seeing. AI generates targeted drill plans with progressions and coaching cues.</p>
+              </div>
+              <div className="rounded-xl bg-[#1C2B35] border border-[#D4A96A]/8 p-5">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-xl">📝</span>
+                  <span className="font-display text-lg text-[#D4A96A]">SESSION REPORTS</span>
+                </div>
+                <p className="text-sm text-[#F7F3ED]/40">Send polished post-session reports to families. Parents finally know exactly what happened during that lesson.</p>
               </div>
               <div className="rounded-xl bg-[#1C2B35] border border-[#D4A96A]/8 p-5">
                 <div className="flex items-center gap-3 mb-2">
@@ -165,6 +172,7 @@ export default function LandingPage() {
               <p>✓ CageTrack custom plans</p>
               <p>✓ Drill library access</p>
               <p>✓ 14-day free trial</p>
+              <p>✓ One subscription covers the whole family</p>
             </div>
             <Link href="/auth/signup" className="block w-full py-3 bg-[#D4A96A] text-[#1C2B35] font-display text-sm tracking-wider rounded-xl hover:bg-[#D4A96A]/90 transition-colors">Start Free Trial</Link>
           </div>
@@ -179,6 +187,7 @@ export default function LandingPage() {
               <p>✓ Lock in your rate</p>
               <p>✓ Best value</p>
               <p>✓ 14-day free trial</p>
+              <p>✓ One subscription covers the whole family</p>
               <p>&nbsp;</p>
             </div>
             <Link href="/auth/signup" className="block w-full py-3 bg-[#D4A96A]/10 border border-[#D4A96A]/20 text-[#D4A96A] font-display text-sm tracking-wider rounded-xl hover:bg-[#D4A96A]/20 transition-colors">Start Free Trial</Link>
