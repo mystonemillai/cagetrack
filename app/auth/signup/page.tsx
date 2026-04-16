@@ -10,6 +10,9 @@ export default function SignupPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [zip, setZip] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -31,7 +34,7 @@ export default function SignupPage() {
       email,
       password,
       options: {
-        data: { name, role },
+        data: { name, role, city, state, zip_code: zip },
         emailRedirectTo: `${window.location.origin}/api/auth/callback`,
       },
     });
@@ -144,6 +147,12 @@ export default function SignupPage() {
               <div>
                 <label className="block text-xs uppercase tracking-widest text-offwhite/40 mb-2">Password</label>
                 <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} className="w-full p-4 bg-navy-light border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors text-base" placeholder="6+ characters" />
+              </div>
+              
+              <div className="grid grid-cols-5 gap-3">
+                <input type="text" value={city} onChange={(e) => setCity(e.target.value)} className="col-span-2 p-4 bg-navy-light border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors text-base" placeholder="City" />
+                <input type="text" value={state} onChange={(e) => setState(e.target.value)} maxLength={2} className="col-span-1 p-4 bg-navy-light border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors text-base uppercase" placeholder="ST" />
+                <input type="text" value={zip} onChange={(e) => setZip(e.target.value)} maxLength={5} className="col-span-2 p-4 bg-navy-light border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors text-base" placeholder="Zip Code" />
               </div>
 
               {error && (
