@@ -220,7 +220,10 @@ export default function CoachDirectoryPage() {
                   <input type="text" value={searchCity} onChange={(e) => { setSearchCity(e.target.value); setUseDistance(false); }} className="col-span-3 p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors" placeholder="City" />
                   <input type="text" value={searchState} onChange={(e) => { setSearchState(e.target.value); setUseDistance(false); }} maxLength={2} className="col-span-2 p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors uppercase" placeholder="State (IL)" />
                 </div>
-                {userLat && <button onClick={() => setUseDistance(true)} className="text-[10px] text-wheat hover:underline mt-2">Search by distance instead</button>}
+                <div className="flex items-center gap-2 mt-3">
+                  <input type="text" value={userZip} onChange={(e) => setUserZip(e.target.value)} maxLength={5} className="w-28 p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors text-center" placeholder="Zip Code" />
+                  <button type="button" onClick={async () => { if (userZip.length === 5) { try { const res = await fetch(`/api/geocode?zip=${userZip}`); if (res.ok) { const geo = await res.json(); setUserLat(geo.latitude); setUserLng(geo.longitude); setUseDistance(true); } } catch(e) {} } }} className="px-4 py-3 bg-wheat/10 border border-wheat/20 text-wheat text-xs font-display tracking-wider rounded-lg hover:bg-wheat/20 transition-colors">Search by Distance</button>
+                </div>
               </div>
             )}
           </div>
