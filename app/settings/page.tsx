@@ -85,6 +85,27 @@ export default function SettingsPage() {
     if (!selectedPlayer) return;
     setCodeError('');
     setCodeLoading(true);
+    // Check subscription
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data: sub } = await supabase.from('subscriptions').select('id').eq('billing_user_id', user.id).eq('status', 'active').single();
+    if (!sub) {
+      // Check family subscription
+      const { data: familyLinks } = await supabase.from('parent_links').select('parent_user_id').eq('status', 'active');
+      const familyIds = familyLinks ? familyLinks.map((fl: any) => fl.parent_user_id).filter(Boolean) : [];
+      const playersOwnerIds = players.map((p: any) => p.owner_user_id).filter(Boolean);
+      const allIds = [...familyIds, ...playersOwnerIds].filter((id, i, arr) => id !== user.id && arr.indexOf(id) === i);
+      let hasFamilySub = false;
+      if (allIds.length > 0) {
+        const { data: fSub } = await supabase.from('subscriptions').select('id').in('billing_user_id', allIds).eq('status', 'active').limit(1);
+        if (fSub && fSub.length > 0) hasFamilySub = true;
+      }
+      if (!hasFamilySub) {
+        setCodeError('Upgrade to a paid plan to connect with coaches.');
+        setCodeLoading(false);
+        return;
+      }
+    }
     const code = generateCode('CT-');
     const { error } = await supabase.from('player_coaches').insert({
       player_id: selectedPlayer, coach_profile_id: null,
