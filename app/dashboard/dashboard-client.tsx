@@ -69,22 +69,21 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
           setHasSubscription(true);
         } else {
           // Check if any linked family member has a subscription
-          const { data: allLinks } = await supabase.from('parent_links').select('parent_user_id, player_id').eq('status', 'active');
-          const familyUserIds: string[] = [];
-          if (allLinks) {
-            allLinks.forEach((link: any) => {
-              if (link.parent_user_id) familyUserIds.push(link.parent_user_id);
-            });
-            // Also check player owners
-            if (allPlayers.length > 0) {
-              allPlayers.forEach((p: any) => { if (p.owner_user_id) familyUserIds.push(p.owner_user_id); });
+          // If I'm a player, check if my parent is subscribed
+          const { data: myParentLinks } = await supabase.from('parent_links').select('parent_user_id').eq('status', 'active');
+          if (myParentLinks && myParentLinks.length > 0) {
+            const parentIds = myParentLinks.map((pl: any) => pl.parent_user_id).filter(Boolean);
+            if (parentIds.length > 0) {
+              const { data: familySub } = await supabase.from('subscriptions').select('id').in('billing_user_id', parentIds).eq('status', 'active').limit(1);
+              if (familySub && familySub.length > 0) setHasSubscription(true);
             }
           }
-          if (familyUserIds.length > 0) {
-            const uniqueIds = familyUserIds.filter((id, i) => id !== userId && familyUserIds.indexOf(id) === i);
-            if (uniqueIds.length > 0) {
-              const { data: familySub } = await supabase.from('subscriptions').select('id').in('billing_user_id', uniqueIds).eq('status', 'active').limit(1);
-              if (familySub && familySub.length > 0) setHasSubscription(true);
+          // If I'm a parent, check if any of my players' owners are subscribed
+          if (!sub && allPlayers.length > 0) {
+            const ownerIds = allPlayers.map((p: any) => p.owner_user_id).filter(Boolean);
+            if (ownerIds.length > 0) {
+              const { data: ownerSub } = await supabase.from('subscriptions').select('id').in('billing_user_id', ownerIds).eq('status', 'active').limit(1);
+              if (ownerSub && ownerSub.length > 0) setHasSubscription(true);
             }
           }
         }
@@ -398,10 +397,10 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
               <div className="rounded-xl bg-navy-light border border-wheat/10 p-8 text-center mb-8">
                 <div className="w-14 h-14 rounded-xl bg-wheat/10 flex items-center justify-center mx-auto mb-4 text-2xl">⚾</div>
                 <h2 className="font-display text-2xl mb-2">Get Started</h2>
-                <p className="text-offwhite/40 mb-6 max-w-sm mx-auto">{isPlayer ? 'Set up your development profile to get started.' : 'Add your player or link to an existing profile.'}</p>
+                <p className="text-offwhite/40 mb-6 max-w-sm mx-auto">Add your player or link to an existing profile.</p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <button onClick={() => setShowCreatePlayer(true)} className="px-6 py-3 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors">{isPlayer ? 'Build Your Profile' : 'Add a New Player'}</button>
-                  {isFamily && <Link href="/settings" className="px-6 py-3 bg-wheat/10 border border-wheat/20 text-wheat font-display text-sm tracking-wider rounded-lg hover:bg-wheat/20 transition-colors text-center">Link to Existing Player</Link>}
+                  <button onClick={() => setShowCreatePlayer(true)} className="px-6 py-3 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors">Add a New Player</button>
+                  <Link href="/settings" className="px-6 py-3 bg-wheat/10 border border-wheat/20 text-wheat font-display text-sm tracking-wider rounded-lg hover:bg-wheat/20 transition-colors text-center">Link to Existing Player</Link>
                 </div>
               </div>
             )}
@@ -465,7 +464,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
                     </div>
                   </div>
                   <div className="flex gap-3">
-                    <button onClick={async () => { const { nativeShare } = await import('@/lib/native'); const result = await nativeShare('CageTrack Coach Profile', 'Check out my coaching profile on CageTrack', `https://cagetrack.com/coach/${coachProfile.id}`); if (result.copied) alert('Profile link copied!'); }} className="text-xs text-wheat hover:underline">Share</button>
+                    <button onClick={() => { navigator.clipboard.writeText(`https://cagetrack.com/coach/${coachProfile.id}`); alert('Profile link copied!'); }} className="text-xs text-wheat hover:underline">Share</button>
                     <Link href="/coach-setup" className="text-xs text-offwhite/30 hover:text-wheat transition-colors">Edit</Link>
                   </div>
                 </div>
@@ -551,11 +550,31 @@ function CoachInviteCodeEntry({ coachProfile }: { coachProfile: any }) {
     e.preventDefault();
     if (!coachProfile) { setError('Set up your coach profile first.'); return; }
     setError(''); setSuccess(''); setLoading(true);
-    const { data, error: lookupError } = await supabase.from('player_coaches').select('*, players(first_name, last_name)').eq('invite_code', code.trim().toUpperCase()).eq('status', 'pending').single();
+    const { data, error: lookupError } = await supabase.from('player_coaches').select('*, players(first_name, last_name, owner_user_id)').eq('invite_code', code.trim().toUpperCase()).eq('status', 'pending').single();
     if (lookupError || !data) { setError('Invalid or expired invite code.'); setLoading(false); return; }
-    const { error: updateError } = await supabase.from('player_coaches').update({ coach_profile_id: coachProfile.id, status: 'active', connected_at: new Date().toISOString() }).eq('id', data.id);
+    
+    // Check if the player's family has an active subscription
+    const ownerId = data.players?.owner_user_id;
+    const { data: ownerSub } = await supabase.from('subscriptions').select('id').eq('billing_user_id', ownerId).eq('status', 'active').limit(1);
+    if (!ownerSub || ownerSub.length === 0) {
+      // Also check parent links for family subscription
+      const { data: parentLinks } = await supabase.from('parent_links').select('parent_user_id').eq('player_id', data.player_id).eq('status', 'active');
+      let hasFamilySub = false;
+      if (parentLinks && parentLinks.length > 0) {
+        const parentIds = parentLinks.map((pl: any) => pl.parent_user_id);
+        const { data: parentSub } = await supabase.from('subscriptions').select('id').in('billing_user_id', parentIds).eq('status', 'active').limit(1);
+        if (parentSub && parentSub.length > 0) hasFamilySub = true;
+      }
+      if (!hasFamilySub) {
+        setError("This player's family needs an active subscription to connect with coaches.");
+        setLoading(false);
+        return;
+      }
+    }
+    
+    const { error: updateError } = await supabase.from('player_coaches').update({ coach_profile_id: coachProfile.id, status: 'pending_approval', connected_at: new Date().toISOString() }).eq('id', data.id);
     if (updateError) { setError(updateError.message); setLoading(false); return; }
-    setSuccess(`Connected to ${data.players.first_name} ${data.players.last_name}!`);
+    setSuccess(`Connection request sent to ${data.players.first_name} ${data.players.last_name}!`);
     setCode(''); setLoading(false);
     setTimeout(() => window.location.reload(), 1500);
   }
