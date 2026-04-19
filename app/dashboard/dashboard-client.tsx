@@ -465,7 +465,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
                     </div>
                   </div>
                   <div className="flex gap-3">
-                    <button onClick={() => { navigator.clipboard.writeText(`https://cagetrack.com/coach/${coachProfile.id}`); alert('Profile link copied!'); }} className="text-xs text-wheat hover:underline">Share</button>
+                    <button onClick={async () => { const { nativeShare } = await import('@/lib/native'); const result = await nativeShare('CageTrack Coach Profile', 'Check out my coaching profile on CageTrack', `https://cagetrack.com/coach/${coachProfile.id}`); if (result.copied) alert('Profile link copied!'); }} className="text-xs text-wheat hover:underline">Share</button>
                     <Link href="/coach-setup" className="text-xs text-offwhite/30 hover:text-wheat transition-colors">Edit</Link>
                   </div>
                 </div>
