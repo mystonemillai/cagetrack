@@ -189,7 +189,29 @@ export default function SettingsPage() {
     setLinkLoading(false);
   }
 
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
   async function handleSignOut() {
+    await supabase.auth.signOut();
+    router.push('/');
+  }
+
+  async function handleDeleteAccount() {
+    setDeleting(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const res = await fetch('/api/account/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: user.id }),
+    });
+    const data = await res.json();
+    if (data.error) {
+      alert('Failed to delete account. Please contact support.');
+      setDeleting(false);
+      return;
+    }
     await supabase.auth.signOut();
     router.push('/');
   }
@@ -354,9 +376,27 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* Sign Out - always last */}
+          {/* Sign Out */}
           <button onClick={handleSignOut} className="w-full p-4 rounded-xl border border-red-500/20 text-red-400/60 hover:text-red-400 hover:border-red-500/40 transition-all text-sm">Sign Out</button>
+
+          {/* Delete Account */}
+          <button onClick={() => setShowDeleteConfirm(true)} className="w-full p-3 text-xs text-offwhite/20 hover:text-red-400 transition-colors">Delete Account</button>
         </div>
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+            <div className="bg-navy-light border border-red-500/20 rounded-2xl p-6 max-w-sm w-full">
+              <h3 className="font-display text-lg text-red-400 mb-3">Delete Account</h3>
+              <p className="text-sm text-offwhite/50 mb-2">This action is permanent and cannot be undone. This will delete:</p>
+              <p className="text-sm text-offwhite/40 mb-4">Your profile, all player data, observations, drill assignments, custom plans, session reports, messages, coach connections, and subscription.</p>
+              <div className="flex gap-3">
+                <button onClick={handleDeleteAccount} disabled={deleting} className="flex-1 py-3 bg-red-500/20 border border-red-500/30 text-red-400 font-display text-sm tracking-wider rounded-lg hover:bg-red-500/30 transition-colors disabled:opacity-50">{deleting ? 'Deleting...' : 'Delete Everything'}</button>
+                <button onClick={() => setShowDeleteConfirm(false)} className="flex-1 py-3 bg-offwhite/5 border border-offwhite/10 text-offwhite/50 font-display text-sm tracking-wider rounded-lg hover:text-wheat transition-colors">Cancel</button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
 
       <nav className="fixed bottom-0 w-full z-50 bg-navy/95 backdrop-blur-xl border-t border-wheat/8 sm:hidden">
