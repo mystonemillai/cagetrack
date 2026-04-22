@@ -5,11 +5,11 @@
 @tailwind utilities;
 
 :root {
-  --navy: #1C2B35;
-  --navy-light: #243540;
-  --wheat: #D4A96A;
-  --offwhite: #F7F3ED;
-  --slate: #3D4F5C;
+  --navy: #181614;
+  --navy-light: #221F1A;
+  --wheat: #C4603C;
+  --offwhite: #EDE5D8;
+  --slate: #D4C5A9;
 }
 
 * {
