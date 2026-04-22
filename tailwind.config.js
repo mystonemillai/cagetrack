@@ -7,21 +7,21 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        navy: {
-          DEFAULT: '#1C2B35',
-          light: '#253844',
-        },
-        wheat: {
-          DEFAULT: '#D4A96A',
-          dim: 'rgba(212, 169, 106, 0.15)',
-        },
-        offwhite: '#F7F3ED',
-        slate: '#3D4F5C',
-      },
-      fontFamily: {
-        display: ['Bebas Neue', 'sans-serif'],
-        body: ['Inter', 'sans-serif'],
-      },
+            navy: {
+              DEFAULT: '#181614',
+              light: '#221F1A',
+            },
+            wheat: {
+              DEFAULT: '#C4603C',
+              dim: 'rgba(196, 96, 60, 0.15)',
+            },
+            offwhite: '#EDE5D8',
+            slate: '#D4C5A9',
+          },
+          fontFamily: {
+            display: ['Syne', 'sans-serif'],
+            body: ['DM Sans', 'sans-serif'],
+          },
     },
   },
   plugins: [],
