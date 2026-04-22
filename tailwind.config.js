@@ -8,8 +8,8 @@ module.exports = {
     extend: {
       colors: {
             navy: {
-              DEFAULT: '#181614',
-              light: '#221F1A',
+              DEFAULT: '#1E1B17',
+              light: '#2A2620',
             },
             wheat: {
               DEFAULT: '#C4603C',
