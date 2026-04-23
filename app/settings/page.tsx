@@ -449,11 +449,28 @@ function SubscriptionSection({ players }: { players: any[] }) {
   const [checkingOut, setCheckingOut] = useState('');
   const [loaded, setLoaded] = useState(false);
   const [isOwnSub, setIsOwnSub] = useState(false);
+  const [isNativeIOS, setIsNativeIOS] = useState(false);
+  const [appleProducts, setAppleProducts] = useState<any[]>([]);
+  const [purchaseError, setPurchaseError] = useState('');
 
   useEffect(() => {
     async function loadSub() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+
+      // Check if running in native iOS
+      const w = window as any;
+      const native = !!(w.Capacitor?.isNativePlatform?.());
+      setIsNativeIOS(native);
+
+      // Load Apple products if native iOS
+      if (native && w.Capacitor?.Plugins?.StoreKit) {
+        try {
+          const result = await w.Capacitor.Plugins.StoreKit.getProducts({ productIds: ['CTMO10', 'CTAN100'] });
+          if (result?.products) setAppleProducts(result.products);
+        } catch (e) {}
+      }
+
       let { data } = await supabase.from('subscriptions').select('*').eq('billing_user_id', user.id).eq('status', 'active').single();
       if (data) {
         setSubscription(data);
@@ -475,6 +492,7 @@ function SubscriptionSection({ players }: { players: any[] }) {
 
   async function handleCheckout(plan: string) {
     setCheckingOut(plan);
+    setPurchaseError('');
     const playerId = players.length > 0 ? players[0].id : null;
     const response = await fetch('/api/stripe/checkout', {
       method: 'POST',
@@ -485,10 +503,83 @@ function SubscriptionSection({ players }: { players: any[] }) {
     if (data.url) { window.location.href = data.url; } else { setCheckingOut(''); }
   }
 
+  async function handleApplePurchase(productId: string) {
+    setCheckingOut(productId);
+    setPurchaseError('');
+    try {
+      const w = window as any;
+      const storeKit = w.Capacitor?.Plugins?.StoreKit;
+      if (!storeKit) { setPurchaseError('Store not available'); setCheckingOut(''); return; }
+
+      const result = await storeKit.purchase({ productId });
+      if (result?.success) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        await fetch('/api/apple/verify-purchase', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id,
+            productId,
+            transactionId: result.transactionId,
+            originalTransactionId: result.originalTransactionId,
+          }),
+        });
+        window.location.reload();
+      } else if (result?.cancelled) {
+        setCheckingOut('');
+      } else {
+        setPurchaseError('Purchase pending. Please try again.');
+        setCheckingOut('');
+      }
+    } catch (err: any) {
+      setPurchaseError(err.message || 'Purchase failed');
+      setCheckingOut('');
+    }
+  }
+
+  async function handleRestorePurchases() {
+    try {
+      const w = window as any;
+      const storeKit = w.Capacitor?.Plugins?.StoreKit;
+      if (!storeKit) return;
+      const result = await storeKit.restorePurchases();
+      if (result?.subscriptions?.length > 0) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        for (const sub of result.subscriptions) {
+          await fetch('/api/apple/verify-purchase', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: user.id,
+              productId: sub.productId,
+              transactionId: sub.transactionId,
+              originalTransactionId: sub.originalTransactionId,
+            }),
+          });
+        }
+        window.location.reload();
+      } else {
+        setPurchaseError('No purchases to restore.');
+      }
+    } catch (err: any) {
+      setPurchaseError(err.message || 'Restore failed');
+    }
+  }
+
   async function handleManageSub() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      if (subscription?.payment_provider === 'apple') {
+        // Open iOS subscription settings
+        const w = window as any;
+        if (w.Capacitor?.isNativePlatform?.()) {
+          window.location.href = 'https://apps.apple.com/account/subscriptions';
+        }
+        return;
+      }
       const res = await fetch('/api/stripe/portal', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id }) });
       const data = await res.json();
       if (data.url) { window.location.href = data.url; } else { alert('Error: ' + (data.error || 'Could not open portal')); }
@@ -513,6 +604,29 @@ function SubscriptionSection({ players }: { players: any[] }) {
     );
   }
 
+  // Native iOS - show Apple IAP
+  if (isNativeIOS) {
+    return (
+      <div>
+        <p className="text-sm text-offwhite/40 mb-4">Choose a plan to unlock all features.</p>
+        <div className="flex gap-3">
+          <button onClick={() => handleApplePurchase('CTMO10')} disabled={checkingOut !== ''} className="flex-1 p-3 rounded-lg border border-wheat/20 text-center hover:border-wheat/40 transition-colors disabled:opacity-50">
+            <div className="font-display text-xl text-wheat">$9.99</div>
+            <div className="text-[10px] text-offwhite/40 mt-0.5">{checkingOut === 'CTMO10' ? 'Processing...' : 'per month'}</div>
+          </button>
+          <button onClick={() => handleApplePurchase('CTAN100')} disabled={checkingOut !== ''} className="flex-1 p-3 rounded-lg border border-wheat/20 text-center hover:border-wheat/40 transition-colors disabled:opacity-50 relative">
+            <div className="absolute -top-2 right-2 text-[8px] bg-green-500 text-white px-1.5 py-0.5 rounded font-bold">SAVE $20</div>
+            <div className="font-display text-xl text-wheat">$99.99</div>
+            <div className="text-[10px] text-offwhite/40 mt-0.5">{checkingOut === 'CTAN100' ? 'Processing...' : 'per year'}</div>
+          </button>
+        </div>
+        {purchaseError && <p className="text-red-400 text-xs mt-2">{purchaseError}</p>}
+        <button onClick={handleRestorePurchases} className="w-full mt-3 text-xs text-offwhite/30 hover:text-wheat transition-colors">Restore Purchases</button>
+      </div>
+    );
+  }
+
+  // Web - show Stripe checkout
   return (
     <div>
       <p className="text-sm text-offwhite/40 mb-4">Choose a plan to unlock all features.</p>
