@@ -465,15 +465,22 @@ function SubscriptionSection({ players }: { players: any[] }) {
 
       // Load Apple products if native iOS
       if (native) {
-        try {
-          const storeKit = w.Capacitor?.Plugins?.StoreKit;
-          console.log('StoreKit plugin:', storeKit);
-          if (storeKit) {
-            const result = await storeKit.getProducts({ productIds: ['CTMO10', 'CTAN100'] });
-            console.log('StoreKit products:', JSON.stringify(result));
-            if (result?.products) setAppleProducts(result.products);
+        const waitForPlugin = async () => {
+          for (let i = 0; i < 10; i++) {
+            const sk = (window as any).Capacitor?.Plugins?.StoreKit;
+            if (sk) {
+              try {
+                const result = await sk.getProducts({ productIds: ['CTMO10', 'CTAN100'] });
+                console.log('StoreKit products:', JSON.stringify(result));
+                if (result?.products) setAppleProducts(result.products);
+              } catch (e) { console.error('StoreKit error:', e); }
+              return;
+            }
+            await new Promise(r => setTimeout(r, 500));
           }
-        } catch (e) { console.error('StoreKit error:', e); }
+          console.log('StoreKit plugin not found after retries');
+        };
+        waitForPlugin();
       }
 
       let { data } = await supabase.from('subscriptions').select('*').eq('billing_user_id', user.id).eq('status', 'active').single();
