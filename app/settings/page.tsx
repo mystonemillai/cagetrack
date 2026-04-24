@@ -464,11 +464,16 @@ function SubscriptionSection({ players }: { players: any[] }) {
       setIsNativeIOS(native);
 
       // Load Apple products if native iOS
-      if (native && w.Capacitor?.Plugins?.StoreKit) {
+      if (native) {
         try {
-          const result = await w.Capacitor.Plugins.StoreKit.getProducts({ productIds: ['CTMO10', 'CTAN100'] });
-          if (result?.products) setAppleProducts(result.products);
-        } catch (e) {}
+          const storeKit = w.Capacitor?.Plugins?.StoreKit;
+          console.log('StoreKit plugin:', storeKit);
+          if (storeKit) {
+            const result = await storeKit.getProducts({ productIds: ['CTMO10', 'CTAN100'] });
+            console.log('StoreKit products:', JSON.stringify(result));
+            if (result?.products) setAppleProducts(result.products);
+          }
+        } catch (e) { console.error('StoreKit error:', e); }
       }
 
       let { data } = await supabase.from('subscriptions').select('*').eq('billing_user_id', user.id).eq('status', 'active').single();
@@ -509,7 +514,7 @@ function SubscriptionSection({ players }: { players: any[] }) {
     try {
       const w = window as any;
       const storeKit = w.Capacitor?.Plugins?.StoreKit;
-      if (!storeKit) { setPurchaseError('Store not available'); setCheckingOut(''); return; }
+      if (!storeKit) { setPurchaseError('Store not available. Please restart the app.'); setCheckingOut(''); console.log('Available plugins:', Object.keys(w.Capacitor?.Plugins || {})); return; }
 
       const result = await storeKit.purchase({ productId });
       if (result?.success) {
