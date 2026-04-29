@@ -634,6 +634,14 @@ function SubscriptionSection({ players }: { players: any[] }) {
         </div>
         {purchaseError && <p className="text-red-400 text-xs mt-2">{purchaseError}</p>}
         <button onClick={handleRestorePurchases} className="w-full mt-3 text-xs text-offwhite/30 hover:text-wheat transition-colors">Restore Purchases</button>
+        <div className="mt-3 text-center space-y-1">
+          <p className="text-[9px] text-offwhite/20">Subscriptions auto-renew unless canceled at least 24 hours before the end of the current period.</p>
+          <p className="text-[9px] text-offwhite/20">Payment is charged to your Apple ID account at confirmation of purchase.</p>
+          <div className="flex justify-center gap-3">
+            <a href="https://www.cagetrack.com/terms" className="text-wheat/40 hover:text-wheat" style={{fontSize: '9px'}}>Terms of Use</a>
+            <a href="https://www.cagetrack.com/privacy" className="text-wheat/40 hover:text-wheat" style={{fontSize: '9px'}}>Privacy Policy</a>
+          </div>
+        </div>
       </div>
     );
   }
