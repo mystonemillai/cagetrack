@@ -64,8 +64,26 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
 
       if (!isCoach) {
         // Check own subscription first
-        const { data: sub } = await supabase.from('subscriptions').select('id').eq('billing_user_id', userId).eq('status', 'active').single();
-        if (sub) {
+        const { data: sub } = await supabase.from('subscriptions').select('*').eq('billing_user_id', userId).eq('status', 'active').single();
+        // Verify Apple subscription is still valid
+        if (sub && sub.payment_provider === 'apple') {
+          const w = window as any;
+          const native = !!(w.Capacitor?.isNativePlatform?.());
+          if (native) {
+            try {
+              const storeKit = w.Capacitor?.Plugins?.StoreKit;
+              if (storeKit) {
+                const restored = await storeKit.restorePurchases();
+                const hasActive = restored?.subscriptions?.some((s: any) => s.productId === sub.apple_product_id);
+                if (!hasActive) {
+                  await supabase.from('subscriptions').update({ status: 'cancelled' }).eq('id', sub.id);
+                  sub.status = 'cancelled';
+                }
+              }
+            } catch (e) {}
+          }
+        }
+        if (sub && sub.status === 'active') {
           setHasSubscription(true);
         } else {
           // Check if any linked family member has a subscription
