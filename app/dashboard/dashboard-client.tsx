@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase-browser';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { initStatusBar, initPushNotifications, hapticTap } from '@/lib/native';
+import { calculatePitchAvailability, getMaxPitches } from '@/lib/pitch-smart';
 
 interface DashboardClientProps {
   profile: any;
@@ -27,6 +28,19 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
   const [connectedPlayers, setConnectedPlayers] = useState<any[]>([]);
   const [pendingRequests, setPendingRequests] = useState<any[]>([]);
   const [hasSubscription, setHasSubscription] = useState(false);
+  const [teams, setTeams] = useState<any[]>([]);
+  const [showCreateTeam, setShowCreateTeam] = useState(false);
+  const [teamName, setTeamName] = useState('');
+  const [teamAgeGroup, setTeamAgeGroup] = useState('');
+  const [teamSport, setTeamSport] = useState('Baseball');
+  const [expandedTeam, setExpandedTeam] = useState<string | null>(null);
+  const [showAddToTeam, setShowAddToTeam] = useState<string | null>(null);
+  const [pitchOutings, setPitchOutings] = useState<Record<string, any[]>>({});
+  const [showLogPitch, setShowLogPitch] = useState<string | null>(null);
+  const [pitchCount, setPitchCount] = useState('');
+  const [pitchDate, setPitchDate] = useState(new Date().toISOString().split('T')[0]);
+  const [pitchType, setPitchType] = useState('game');
+  const [pitchNotes, setPitchNotes] = useState('');
   const [dataLoaded, setDataLoaded] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(() => { if (typeof window !== 'undefined') { return localStorage.getItem('notif_dismissed_' + userId) !== new Date().toDateString(); } return true; });
@@ -88,9 +102,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
         } else {
           // Check if any linked family member has a subscription
           // If I'm a player, check if my parent is subscribed
-          const playerIds = allPlayers.map((p: any) => p.id);
-          const { data: myParentLinks } = playerIds.length > 0 ? await supabase.from('parent_links').select('parent_user_id').eq('status', 'active').in('player_id', playerIds) : { data: null };
-          const { data: myAsParent } = await supabase.from('parent_links').select('player_id').eq('parent_user_id', userId).eq('status', 'active');
+          const { data: myParentLinks } = await supabase.from('parent_links').select('parent_user_id').eq('status', 'active');
           if (myParentLinks && myParentLinks.length > 0) {
             const parentIds = myParentLinks.map((pl: any) => pl.parent_user_id).filter(Boolean);
             if (parentIds.length > 0) {
@@ -98,15 +110,12 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
               if (familySub && familySub.length > 0) setHasSubscription(true);
             }
           }
-          if (myAsParent && myAsParent.length > 0) {
-            const linkedPlayerIds = myAsParent.map((pl: any) => pl.player_id);
-            const { data: linkedPlayers } = await supabase.from('players').select('owner_user_id').in('id', linkedPlayerIds);
-            if (linkedPlayers) {
-              const ownerIds = linkedPlayers.map((p: any) => p.owner_user_id).filter(Boolean);
-              if (ownerIds.length > 0) {
-                const { data: ownerSub } = await supabase.from('subscriptions').select('id').in('billing_user_id', ownerIds).eq('status', 'active').limit(1);
-                if (ownerSub && ownerSub.length > 0) setHasSubscription(true);
-              }
+          // If I'm a parent, check if any of my players' owners are subscribed
+          if (!sub && allPlayers.length > 0) {
+            const ownerIds = allPlayers.map((p: any) => p.owner_user_id).filter(Boolean);
+            if (ownerIds.length > 0) {
+              const { data: ownerSub } = await supabase.from('subscriptions').select('id').in('billing_user_id', ownerIds).eq('status', 'active').limit(1);
+              if (ownerSub && ownerSub.length > 0) setHasSubscription(true);
             }
           }
         }
@@ -120,6 +129,25 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
           setConnectedPlayers(connected || []);
           const { data: pending } = await supabase.from('player_coaches').select('*, players(first_name, last_name, age_group, sport)').eq('coach_profile_id', cp.id).eq('status', 'pending_approval');
           setPendingRequests(pending || []);
+
+          // Load teams
+          const { data: myTeams } = await supabase.from('teams').select('*, team_players(*, players(*))').eq('coach_profile_id', cp.id).order('created_at');
+          setTeams(myTeams || []);
+
+          // Load pitch outings for all connected players (last 7 days)
+          if (connected && connected.length > 0) {
+            const pIds = connected.map((c: any) => c.players.id);
+            const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            const { data: outings } = await supabase.from('pitch_outings').select('*').in('player_id', pIds).gte('outing_date', sevenDaysAgo).order('outing_date', { ascending: false });
+            if (outings) {
+              const grouped: Record<string, any[]> = {};
+              outings.forEach((o: any) => {
+                if (!grouped[o.player_id]) grouped[o.player_id] = [];
+                grouped[o.player_id].push(o);
+              });
+              setPitchOutings(grouped);
+            }
+          }
         }
       }
 
@@ -230,6 +258,50 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
     window.location.reload();
   }
 
+  async function handleCreateTeam(e: React.FormEvent) {
+    e.preventDefault();
+    if (!coachProfile || !teamName) return;
+    await supabase.from('teams').insert({
+      coach_profile_id: coachProfile.id,
+      team_name: teamName,
+      age_group: teamAgeGroup || null,
+      sport: teamSport,
+    });
+    setTeamName(''); setTeamAgeGroup(''); setShowCreateTeam(false);
+    window.location.reload();
+  }
+
+  async function handleAddPlayerToTeam(teamId: string, playerId: string) {
+    await supabase.from('team_players').insert({ team_id: teamId, player_id: playerId });
+    setShowAddToTeam(null);
+    window.location.reload();
+  }
+
+  async function handleRemovePlayerFromTeam(teamPlayerId: string) {
+    await supabase.from('team_players').delete().eq('id', teamPlayerId);
+    window.location.reload();
+  }
+
+  async function handleDeleteTeam(teamId: string) {
+    if (!confirm('Delete this team? Players will not be removed from your roster.')) return;
+    await supabase.from('teams').delete().eq('id', teamId);
+    window.location.reload();
+  }
+
+  async function handleLogPitch(playerId: string, teamId?: string) {
+    if (!coachProfile || !pitchCount || parseInt(pitchCount) <= 0) return;
+    await supabase.from('pitch_outings').insert({
+      player_id: playerId,
+      coach_profile_id: coachProfile.id,
+      team_id: teamId || null,
+      outing_date: pitchDate,
+      pitch_count: parseInt(pitchCount),
+      outing_type: pitchType,
+      notes: pitchNotes || null,
+    });
+    setPitchCount(''); setPitchDate(new Date().toISOString().split('T')[0]); setPitchType('game'); setPitchNotes(''); setShowLogPitch(null);
+    window.location.reload();
+  }
   async function handleCreatePlayer(e: React.FormEvent) {
     e.preventDefault();
     setCreateError('');
@@ -523,6 +595,127 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
             )}
             {connectedPlayers.length > 0 && (
               <div className="mb-6">
+                {/* My Teams */}
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="font-display text-xl text-wheat">My Teams</h2>
+                  <button onClick={() => setShowCreateTeam(!showCreateTeam)} className="text-xs text-wheat hover:underline">{showCreateTeam ? 'Cancel' : '+ Create Team'}</button>
+                </div>
+
+                {showCreateTeam && (
+                  <form onSubmit={handleCreateTeam} className="rounded-xl bg-navy-light border border-wheat/15 p-5 mb-4">
+                    <div className="space-y-3">
+                      <input type="text" value={teamName} onChange={(e) => setTeamName(e.target.value)} required className="w-full p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors" placeholder="Team name (e.g. Limestone Reapers 14U)" />
+                      <div className="flex gap-3">
+                        <select value={teamAgeGroup} onChange={(e) => setTeamAgeGroup(e.target.value)} className="flex-1 p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors">
+                          <option value="">Age Group</option>
+                          {['8U','9U','10U','11U','12U','13U','14U','15U','16U','17U','18U'].map(ag => <option key={ag} value={ag}>{ag}</option>)}
+                        </select>
+                        <select value={teamSport} onChange={(e) => setTeamSport(e.target.value)} className="flex-1 p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors">
+                          <option value="Baseball">Baseball</option>
+                          <option value="Softball">Softball</option>
+                        </select>
+                      </div>
+                      <button type="submit" className="w-full p-3 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors">Create Team</button>
+                    </div>
+                  </form>
+                )}
+
+                {teams.length > 0 && (
+                  <div className="space-y-3 mb-6">
+                    {teams.map((team) => (
+                      <div key={team.id} className="rounded-xl bg-navy-light border border-wheat/8 overflow-hidden">
+                        <button onClick={() => setExpandedTeam(expandedTeam === team.id ? null : team.id)} className="w-full p-5 flex items-center justify-between text-left">
+                          <div>
+                            <h3 className="font-display text-lg tracking-wide text-wheat">{team.team_name}</h3>
+                            <div className="flex gap-2 mt-1">
+                              {team.age_group && <span className="text-xs text-wheat bg-wheat/10 px-2 py-0.5 rounded">{team.age_group}</span>}
+                              <span className="text-xs text-offwhite/30 bg-offwhite/5 px-2 py-0.5 rounded">{team.sport}</span>
+                              <span className="text-xs text-offwhite/20">{team.team_players?.length || 0} players</span>
+                            </div>
+                          </div>
+                          <span className={`text-offwhite/20 transition-transform ${expandedTeam === team.id ? 'rotate-90' : ''}`}>→</span>
+                        </button>
+
+                        {expandedTeam === team.id && (
+                          <div className="px-5 pb-5 border-t border-wheat/5">
+                            {team.team_players && team.team_players.length > 0 ? (
+                              <div className="space-y-2 mt-3">
+                                {team.team_players.map((tp: any) => {
+                                  const playerOutings = pitchOutings[tp.players.id] || [];
+                                  const availability = calculatePitchAvailability(tp.players.age_group || '12U', playerOutings);
+                                  const statusColors = { green: 'bg-green-500', yellow: 'bg-yellow-500', red: 'bg-red-500' };
+                                  return (
+                                    <div key={tp.id} className="rounded-lg bg-navy p-3">
+                                      <div className="flex items-center justify-between">
+                                        <Link href={`/player/${tp.players.id}`} className="flex items-center gap-3 hover:text-wheat transition-colors">
+                                          <div className={`w-3 h-3 rounded-full ${statusColors[availability.status]}`} />
+                                          <div>
+                                            <span className="text-sm font-medium">{tp.players.first_name} {tp.players.last_name}</span>
+                                            <span className="text-[10px] text-offwhite/20 ml-2">{tp.players.age_group}</span>
+                                          </div>
+                                        </Link>
+                                        <div className="flex items-center gap-3">
+                                          <button onClick={() => { setShowLogPitch(tp.players.id); }} className="text-[10px] text-wheat hover:underline">Log Pitches</button>
+                                          <button onClick={() => handleRemovePlayerFromTeam(tp.id)} className="text-[10px] text-offwhite/15 hover:text-red-400 transition-colors">Remove</button>
+                                        </div>
+                                      </div>
+                                      <div className="ml-6 mt-1">
+                                        <span className={`text-[10px] ${availability.status === 'green' ? 'text-green-400' : availability.status === 'yellow' ? 'text-yellow-400' : 'text-red-400'}`}>{availability.label}</span>
+                                        {availability.lastOuting && (
+                                          <span className="text-[10px] text-offwhite/20 ml-2">Last: {availability.lastOuting.pitchCount} pitches ({availability.lastOuting.outingType}) — {new Date(availability.lastOuting.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                                        )}
+                                      </div>
+
+                                      {showLogPitch === tp.players.id && (
+                                        <div className="mt-3 p-3 bg-navy-light rounded-lg border border-wheat/10">
+                                          <div className="grid grid-cols-2 gap-2 mb-2">
+                                            <input type="number" value={pitchCount} onChange={(e) => setPitchCount(e.target.value)} placeholder="Pitch count" min="1" max={availability.maxPitches.toString()} className="p-2 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none text-sm text-center" />
+                                            <input type="date" value={pitchDate} onChange={(e) => setPitchDate(e.target.value)} className="p-2 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none text-sm" />
+                                          </div>
+                                          <div className="flex gap-2 mb-2">
+                                            {['game', 'bullpen', 'practice'].map(t => (
+                                              <button key={t} type="button" onClick={() => setPitchType(t)} className={`flex-1 py-1.5 rounded-lg text-[10px] font-medium capitalize transition-all ${pitchType === t ? 'bg-wheat text-navy' : 'bg-navy border border-wheat/10 text-offwhite/40'}`}>{t}</button>
+                                            ))}
+                                          </div>
+                                          <input type="text" value={pitchNotes} onChange={(e) => setPitchNotes(e.target.value)} placeholder="Notes (optional)" className="w-full p-2 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none text-sm mb-2" />
+                                          <div className="flex gap-2">
+                                            <button onClick={() => handleLogPitch(tp.players.id, team.id)} className="flex-1 py-2 bg-wheat text-navy text-xs font-display tracking-wider rounded-lg hover:bg-wheat/90">Save</button>
+                                            <button onClick={() => setShowLogPitch(null)} className="px-3 py-2 text-xs text-offwhite/30 hover:text-wheat">Cancel</button>
+                                          </div>
+                                          <p className="text-[9px] text-offwhite/15 mt-1 text-center">Max: {availability.maxPitches} pitches ({tp.players.age_group || '12U'} Pitch Smart)</p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <p className="text-xs text-offwhite/25 mt-3">No players on this team yet.</p>
+                            )}
+
+                            {showAddToTeam === team.id ? (
+                              <div className="mt-3 space-y-2">
+                                <p className="text-xs text-offwhite/40">Add a connected player:</p>
+                                {connectedPlayers.filter(cp => !team.team_players?.some((tp: any) => tp.player_id === cp.players.id)).map((cp) => (
+                                  <button key={cp.id} onClick={() => handleAddPlayerToTeam(team.id, cp.players.id)} className="block w-full text-left p-2 rounded-lg bg-navy hover:bg-wheat/5 text-sm text-offwhite/60 hover:text-wheat transition-colors">
+                                    {cp.players.first_name} {cp.players.last_name} — {cp.players.age_group}
+                                  </button>
+                                ))}
+                                <button onClick={() => setShowAddToTeam(null)} className="text-[10px] text-offwhite/20 hover:text-wheat">Cancel</button>
+                              </div>
+                            ) : (
+                              <div className="flex gap-3 mt-3">
+                                <button onClick={() => setShowAddToTeam(team.id)} className="text-xs text-wheat hover:underline">+ Add Player</button>
+                                <button onClick={() => handleDeleteTeam(team.id)} className="text-xs text-offwhite/15 hover:text-red-400 transition-colors">Delete Team</button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <h2 className="font-display text-xl text-offwhite/60 mb-3">Your Players</h2>
                 <div className="space-y-3">
                   {connectedPlayers.map((connection) => (
