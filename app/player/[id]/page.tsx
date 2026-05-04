@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase-browser';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import { calculatePitchAvailability, getMaxPitches } from '@/lib/pitch-smart';
 
 const DRILL_CATEGORIES = ['Hitting', 'Pitching Fundamentals', 'Pitching Accuracy', 'Pitcher Recovery', 'Catcher', 'First Base', 'Third Base', 'Middle Infield', 'Infield Fundamentals', 'Outfield Fundamentals', 'Center Field', 'Corner Outfield', 'Mental Game'];
 const OBS_CATEGORIES = ['Hitting', 'Pitching', 'Fielding', 'Catching', 'Baserunning', 'Mental Game', 'General'];
@@ -52,6 +53,7 @@ export default function PlayerDetailPage() {
   const [sessionGenerating, setSessionGenerating] = useState(false);
   const [sessionError, setSessionError] = useState('');
   const [sessionReports, setSessionReports] = useState<any[]>([]);
+  const [pitchOutings, setPitchOutings] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [msgText, setMsgText] = useState('');
   const [msgSending, setMsgSending] = useState(false);
@@ -94,6 +96,11 @@ export default function PlayerDetailPage() {
 
       const { data: reports } = await supabase.from('session_reports').select('*').eq('player_id', playerId).order('created_at', { ascending: false });
       setSessionReports(reports || []);
+
+      // Load pitch outings (last 14 days)
+      const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const { data: pOutings } = await supabase.from('pitch_outings').select('*').eq('player_id', playerId).gte('outing_date', fourteenDaysAgo).order('outing_date', { ascending: false });
+      setPitchOutings(pOutings || []);
 
       setLoading(false);
     }
@@ -375,6 +382,40 @@ export default function PlayerDetailPage() {
                 <div className="text-[10px] text-offwhite/40 uppercase tracking-wider mt-1">Session Reports</div>
               </button>
             </div>
+
+            {/* Pitch Status */}
+            {player?.sport === 'Baseball' && (() => {
+              const availability = calculatePitchAvailability(player?.age_group || '12U', pitchOutings);
+              const statusColors = { green: 'border-green-500/30 bg-green-500/5', yellow: 'border-yellow-500/30 bg-yellow-500/5', red: 'border-red-500/30 bg-red-500/5' };
+              const statusText = { green: 'text-green-400', yellow: 'text-yellow-400', red: 'text-red-400' };
+              return (
+                <div className={`rounded-xl border p-4 ${statusColors[availability.status]}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-display text-sm text-wheat tracking-wider">PITCH STATUS</h3>
+                    <span className="text-xs text-offwhite/20">Pitch Smart ({player?.age_group})</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-4 h-4 rounded-full ${availability.status === 'green' ? 'bg-green-500' : availability.status === 'yellow' ? 'bg-yellow-500' : 'bg-red-500'}`} />
+                    <span className={`text-sm font-medium ${statusText[availability.status]}`}>{availability.label}</span>
+                  </div>
+                  {availability.lastOuting && (
+                    <p className="text-[10px] text-offwhite/25 mt-2">Last outing: {availability.lastOuting.pitchCount} pitches ({availability.lastOuting.outingType}) — {new Date(availability.lastOuting.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+                  )}
+                  <p className="text-[10px] text-offwhite/15 mt-1">Daily max: {availability.maxPitches} pitches</p>
+                  {pitchOutings.length > 0 && (
+                    <div className="mt-3 border-t border-wheat/5 pt-2">
+                      <p className="text-[10px] text-offwhite/25 mb-1">Recent outings:</p>
+                      {pitchOutings.slice(0, 3).map((o, i) => (
+                        <div key={i} className="flex justify-between text-[10px] text-offwhite/20 py-0.5">
+                          <span>{new Date(o.outing_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} — {o.outing_type}</span>
+                          <span>{o.pitch_count} pitches</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             <div className="rounded-xl bg-navy-light border border-wheat/8 p-6">
               <h2 className="font-display text-lg text-wheat mb-4">Recent Activity</h2>
