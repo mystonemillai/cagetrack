@@ -8,15 +8,15 @@ module.exports = {
     extend: {
       colors: {
             navy: {
-              DEFAULT: '#0A0B0D',
-              light: '#161719',
+              DEFAULT: '#111827',
+              light: '#1F2937',
             },
             wheat: {
-              DEFAULT: '#C4603C',
-              dim: 'rgba(196, 96, 60, 0.15)',
+              DEFAULT: '#F97316',
+              dim: 'rgba(249, 115, 22, 0.15)',
             },
-            offwhite: '#EAEAEA',
-            slate: '#D4C5A9',
+            offwhite: '#F9FAFB',
+            slate: '#E5E7EB',
           },
           fontFamily: {
             display: ['Syne', 'sans-serif'],
