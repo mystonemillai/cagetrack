@@ -651,18 +651,18 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
                                           <div className={`w-3 h-3 rounded-full ${statusColors[availability.status]}`} />
                                           <div>
                                             <span className="text-sm font-medium">{tp.players.first_name} {tp.players.last_name}</span>
-                                            <span className="text-[10px] text-offwhite/20 ml-2">{tp.players.age_group}</span>
+                                            <span className="text-[10px] text-offwhite/30 ml-2">{tp.players.age_group}</span>
                                           </div>
                                         </Link>
                                         <div className="flex items-center gap-3">
-                                          <button onClick={() => { setShowLogPitch(tp.players.id); }} className="text-[10px] text-wheat hover:underline">Log Pitches</button>
-                                          <button onClick={() => handleRemovePlayerFromTeam(tp.id)} className="text-[10px] text-offwhite/15 hover:text-red-400 transition-colors">Remove</button>
+                                          <button onClick={() => setShowLogPitch(showLogPitch === tp.players.id ? null : tp.players.id)} className="text-[10px] text-wheat font-medium hover:underline">Log Pitches</button>
+                                          <button onClick={() => handleRemovePlayerFromTeam(tp.id)} className="text-[10px] text-offwhite/20 hover:text-red-400 transition-colors">Remove</button>
                                         </div>
                                       </div>
                                       <div className="ml-6 mt-1">
-                                        <span className={`text-[10px] ${availability.status === 'green' ? 'text-green-400' : availability.status === 'yellow' ? 'text-yellow-400' : 'text-red-400'}`}>{availability.label}</span>
+                                        <span className={`text-[10px] font-medium ${availability.status === 'green' ? 'text-green-400' : availability.status === 'yellow' ? 'text-yellow-400' : 'text-red-400'}`}>{availability.label}</span>
                                         {availability.lastOuting && (
-                                          <span className="text-[10px] text-offwhite/20 ml-2">Last: {availability.lastOuting.pitchCount} pitches ({availability.lastOuting.outingType}) — {new Date(availability.lastOuting.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                                          <span className="text-[10px] text-offwhite/40 ml-2">Last: {availability.lastOuting.pitchCount} pitches ({availability.lastOuting.outingType}) — {new Date(availability.lastOuting.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                                         )}
                                       </div>
 
