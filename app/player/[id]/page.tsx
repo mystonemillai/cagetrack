@@ -58,6 +58,8 @@ export default function PlayerDetailPage() {
   const [msgText, setMsgText] = useState('');
   const [msgSending, setMsgSending] = useState(false);
   const [playerCoaches, setPlayerCoaches] = useState<any[]>([]);
+  const [hasSubscription, setHasSubscription] = useState(true); // default true so coaches aren't blocked
+  const [subEndDate, setSubEndDate] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -76,6 +78,33 @@ export default function PlayerDetailPage() {
         if (cp) {
           const { data: md } = await supabase.from('coach_drills').select('*').eq('coach_profile_id', cp.id).eq('is_active', true);
           setMyDrills(md || []);
+        }
+      } else {
+        // Check subscription for player/parent
+        const { data: sub } = await supabase.from('subscriptions').select('*').eq('billing_user_id', user.id).eq('status', 'active').single();
+        if (sub) {
+          setHasSubscription(true);
+          if (sub.current_period_end) setSubEndDate(sub.current_period_end);
+        } else {
+          // Check family subscription
+          const playerIds = [playerId];
+          const { data: myParentLinks } = await supabase.from('parent_links').select('parent_user_id').eq('status', 'active').in('player_id', playerIds);
+          const { data: myAsParent } = await supabase.from('parent_links').select('player_id').eq('parent_user_id', user.id).eq('status', 'active');
+          const familyIds: string[] = [];
+          if (myParentLinks) myParentLinks.forEach((l: any) => { if (l.parent_user_id) familyIds.push(l.parent_user_id); });
+          if (myAsParent) {
+            const linkedIds = myAsParent.map((l: any) => l.player_id);
+            const { data: lp } = await supabase.from('players').select('owner_user_id').in('id', linkedIds);
+            if (lp) lp.forEach((p2: any) => { if (p2.owner_user_id) familyIds.push(p2.owner_user_id); });
+          }
+          const uniqueIds = familyIds.filter((id, i) => id !== user.id && familyIds.indexOf(id) === i);
+          if (uniqueIds.length > 0) {
+            const { data: famSub } = await supabase.from('subscriptions').select('*').in('billing_user_id', uniqueIds).eq('status', 'active').limit(1);
+            if (famSub && famSub.length > 0) setHasSubscription(true);
+            else setHasSubscription(false);
+          } else {
+            setHasSubscription(false);
+          }
         }
       }
 
@@ -343,6 +372,17 @@ export default function PlayerDetailPage() {
 
         {activeTab === 'overview' && (
           <div className="space-y-4">
+            {!isCoach && !hasSubscription && (
+              <a href="/settings" className="block rounded-xl bg-wheat/5 border border-wheat/20 p-4 hover:border-wheat/30 transition-all">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-semibold text-wheat">Your subscription is inactive</div>
+                    <div className="text-xs text-offwhite/40 mt-0.5">Subscribe to view new content from your coaches</div>
+                  </div>
+                  <span className="text-wheat text-xs font-display tracking-wider">SUBSCRIBE →</span>
+                </div>
+              </a>
+            )}
             {isCoach && (
               <div className="grid grid-cols-2 gap-3">
                 <button onClick={() => setActiveTab('observations')} className="rounded-xl bg-wheat/10 border border-wheat/20 p-4 text-center hover:border-wheat/30 transition-all">
@@ -483,6 +523,14 @@ export default function PlayerDetailPage() {
 
         {activeTab === 'observations' && (
           <div className="space-y-4">
+            {!isCoach && !hasSubscription && (
+              <div className="rounded-xl bg-wheat/5 border border-wheat/20 p-5 text-center">
+                <div className="text-2xl mb-2">🔒</div>
+                <h3 className="font-display text-lg text-wheat mb-1">Subscribe to View New Content</h3>
+                <p className="text-xs text-offwhite/40 mb-3">Your coaches have added {observations.length} observations. Subscribe to view the latest updates.</p>
+                <a href="/settings" className="inline-block px-6 py-2.5 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors">Subscribe Now</a>
+              </div>
+            )}
             {isCoach && (
               <div className="rounded-xl bg-navy-light border border-wheat/10 p-6">
                 <h3 className="font-display text-lg text-wheat mb-3">Add Observation</h3>
@@ -526,6 +574,14 @@ export default function PlayerDetailPage() {
 
         {activeTab === 'drills' && (
           <div className="space-y-4">
+            {!isCoach && !hasSubscription && (
+              <div className="rounded-xl bg-wheat/5 border border-wheat/20 p-5 text-center">
+                <div className="text-2xl mb-2">🔒</div>
+                <h3 className="font-display text-lg text-wheat mb-1">Subscribe to View New Content</h3>
+                <p className="text-xs text-offwhite/40 mb-3">Your coaches have assigned {assignments.length} drills. Subscribe to view the latest assignments.</p>
+                <a href="/settings" className="inline-block px-6 py-2.5 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors">Subscribe Now</a>
+              </div>
+            )}
             {isCoach && (
               <div className="rounded-xl bg-navy-light border border-wheat/10 p-6">
                 <h3 className="font-display text-lg text-wheat mb-3">Assign a Drill</h3>
@@ -623,6 +679,14 @@ export default function PlayerDetailPage() {
 
         {activeTab === 'ai-plans' && (
           <div className="space-y-4">
+            {!isCoach && !hasSubscription && (
+              <div className="rounded-xl bg-wheat/5 border border-wheat/20 p-5 text-center">
+                <div className="text-2xl mb-2">🔒</div>
+                <h3 className="font-display text-lg text-wheat mb-1">Subscribe to View New Content</h3>
+                <p className="text-xs text-offwhite/40 mb-3">Your coaches have created {aiPlans.length} custom plans. Subscribe to view them.</p>
+                <a href="/settings" className="inline-block px-6 py-2.5 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors">Subscribe Now</a>
+              </div>
+            )}
             {isCoach && (
               <div className="rounded-xl bg-navy-light border border-wheat/10 p-6">
                 <h3 className="font-display text-lg text-wheat mb-1">Generate a Custom Plan</h3>
@@ -655,6 +719,14 @@ export default function PlayerDetailPage() {
         )}
         {activeTab === 'messages' && (
           <div className="space-y-4">
+            {!isCoach && !hasSubscription ? (
+              <div className="rounded-xl bg-wheat/5 border border-wheat/20 p-5 text-center">
+                <div className="text-2xl mb-2">🔒</div>
+                <h3 className="font-display text-lg text-wheat mb-1">Subscribe to Access Messages</h3>
+                <p className="text-xs text-offwhite/40 mb-3">You have {messages.length} messages. Subscribe to view and send messages.</p>
+                <a href="/settings" className="inline-block px-6 py-2.5 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors">Subscribe Now</a>
+              </div>
+            ) : (
             <div className="rounded-xl bg-navy-light border border-wheat/8 p-5">
               <h3 className="font-display text-lg text-wheat mb-4">Messages</h3>
               <p className="text-xs text-offwhite/30 mb-4">Private messages between coaches and family connected to {player.first_name}&apos;s profile.</p>
@@ -680,11 +752,20 @@ export default function PlayerDetailPage() {
                 <button type="submit" disabled={msgSending || !msgText.trim()} className="px-5 py-3 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors disabled:opacity-50">{msgSending ? '...' : 'Send'}</button>
               </form>
             </div>
+            )}
           </div>
         )}
 
         {activeTab === 'session-report' && (
           <div className="space-y-4">
+            {!isCoach && !hasSubscription && (
+              <div className="rounded-xl bg-wheat/5 border border-wheat/20 p-5 text-center">
+                <div className="text-2xl mb-2">🔒</div>
+                <h3 className="font-display text-lg text-wheat mb-1">Subscribe to View Session Reports</h3>
+                <p className="text-xs text-offwhite/40 mb-3">Your coaches have logged {sessionReports.length} session reports. Subscribe to view them.</p>
+                <a href="/settings" className="inline-block px-6 py-2.5 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors">Subscribe Now</a>
+              </div>
+            )}
             {isCoach && (
               <div className="rounded-xl bg-navy-light border border-wheat/10 p-6">
                 <h3 className="font-display text-lg text-wheat mb-3">Log Session Report</h3>
