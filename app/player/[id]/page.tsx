@@ -439,14 +439,14 @@ export default function PlayerDetailPage() {
                     <span className={`text-sm font-medium ${statusText[availability.status]}`}>{availability.label}</span>
                   </div>
                   {availability.lastOuting && (
-                    <p className="text-[10px] text-offwhite/25 mt-2">Last outing: {availability.lastOuting.pitchCount} pitches ({availability.lastOuting.outingType}) — {new Date(availability.lastOuting.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+                    <p className="text-[10px] text-offwhite/40 mt-2">Last outing: {availability.lastOuting.pitchCount} pitches ({availability.lastOuting.outingType}) — {new Date(availability.lastOuting.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
                   )}
-                  <p className="text-[10px] text-offwhite/15 mt-1">Daily max: {availability.maxPitches} pitches</p>
+                  <p className="text-[10px] text-offwhite/30 mt-1">Daily max: {availability.maxPitches} pitches</p>
                   {pitchOutings.length > 0 && (
                     <div className="mt-3 border-t border-wheat/5 pt-2">
-                      <p className="text-[10px] text-offwhite/25 mb-1">Recent outings:</p>
+                      <p className="text-[10px] text-offwhite/40 mb-1">Recent outings:</p>
                       {pitchOutings.slice(0, 3).map((o, i) => (
-                        <div key={i} className="flex justify-between text-[10px] text-offwhite/20 py-0.5">
+                        <div key={i} className="flex justify-between text-[10px] text-offwhite/35 py-0.5">
                           <span>{new Date(o.outing_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} — {o.outing_type}</span>
                           <span>{o.pitch_count} pitches</span>
                         </div>
