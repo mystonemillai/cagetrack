@@ -15,6 +15,7 @@
     "@supabase/supabase-js": "^2.47.12",
     "@supabase/ssr": "^0.5.2",
     "stripe": "^17.5.0"
+    "lucide-react": "^0.383.0",
   },
   "devDependencies": {
     "@types/node": "^22.10.5",
