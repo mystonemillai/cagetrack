@@ -42,17 +42,17 @@ export default function LandingPage() {
           </div>
           <div className="grid sm:grid-cols-3 gap-8">
             <div className="text-center">
-              <div className="w-16 h-16 rounded-2xl bg-[#F97316]/10 flex items-center justify-center mx-auto mb-4 text-3xl">📱</div>
+              <div className="w-16 h-16 rounded-2xl bg-[#F97316]/10 flex items-center justify-center mx-auto mb-4 text-3xl"><CTIcon name="home" size={32} className="text-[#F97316]" /></div>
               <h3 className="font-display text-xl text-[#F97316] mb-2">ONE PROFILE</h3>
               <p className="text-sm text-[#F9FAFB]/40 leading-relaxed">Every coach contributes to the same player profile. No more scattered notes across apps, texts, and paper.</p>
             </div>
             <div className="text-center">
-              <div className="w-16 h-16 rounded-2xl bg-[#F97316]/10 flex items-center justify-center mx-auto mb-4 text-3xl">🧠</div>
+              <div className="w-16 h-16 rounded-2xl bg-[#F97316]/10 flex items-center justify-center mx-auto mb-4 text-3xl"><CTIcon name="plan" size={32} className="text-[#F97316]" /></div>
               <h3 className="font-display text-xl text-[#F97316] mb-2">CUSTOM DEVELOPMENT PLANS</h3>
               <p className="text-sm text-[#F9FAFB]/40 leading-relaxed">Coaches describe what they see. CageTrack AI creates targeted drill plans with progressions, coaching cues, and weekly timelines.</p>
             </div>
             <div className="text-center">
-              <div className="w-16 h-16 rounded-2xl bg-[#F97316]/10 flex items-center justify-center mx-auto mb-4 text-3xl">🤝</div>
+              <div className="w-16 h-16 rounded-2xl bg-[#F97316]/10 flex items-center justify-center mx-auto mb-4 text-3xl"><CTIcon name="connect" size={32} className="text-[#F97316]" /></div>
               <h3 className="font-display text-xl text-[#F97316] mb-2">SESSION REPORTS</h3>
               <p className="text-sm text-[#F9FAFB]/40 leading-relaxed">After every lesson, coaches send polished session reports directly to families. What was worked on, what improved, and what to focus on next.</p>
             </div>
@@ -102,35 +102,35 @@ export default function LandingPage() {
             <div className="space-y-4">
               <div className="rounded-xl bg-[#111827] border border-[#F97316]/8 p-5">
                 <div className="flex items-center gap-3 mb-2">
-                  <span className="text-xl">📋</span>
+                  <span className="text-xl"><CTIcon name="drill" size={20} className="text-[#F97316]" /></span>
                   <span className="font-display text-lg text-[#F97316]">COACHING PROFILE</span>
                 </div>
                 <p className="text-sm text-[#F9FAFB]/40">Specialties, bio, location, video intro. Get found by local families searching for coaches.</p>
               </div>
               <div className="rounded-xl bg-[#111827] border border-[#F97316]/8 p-5">
                 <div className="flex items-center gap-3 mb-2">
-                  <span className="text-xl">👁️</span>
+                  <span className="text-xl"><CTIcon name="observation" size={20} className="text-[#F97316]" /></span>
                   <span className="font-display text-lg text-[#F97316]">LOG OBSERVATIONS</span>
                 </div>
                 <p className="text-sm text-[#F9FAFB]/40">Track what you see in every session. Build a development history for each player.</p>
               </div>
               <div className="rounded-xl bg-[#111827] border border-[#F97316]/8 p-5">
                 <div className="flex items-center gap-3 mb-2">
-                  <span className="text-xl">🧠</span>
+                  <span className="text-xl"><CTIcon name="plan" size={20} className="text-[#F97316]" /></span>
                   <span className="font-display text-lg text-[#F97316]">CUSTOM PLANS</span>
                 </div>
                 <p className="text-sm text-[#F9FAFB]/40">Describe what you&apos;re seeing. AI generates targeted drill plans with progressions and coaching cues.</p>
               </div>
               <div className="rounded-xl bg-[#111827] border border-[#F97316]/8 p-5">
                 <div className="flex items-center gap-3 mb-2">
-                  <span className="text-xl">📝</span>
+                  <span className="text-xl"><CTIcon name="session" size={20} className="text-[#F97316]" /></span>
                   <span className="font-display text-lg text-[#F97316]">SESSION REPORTS</span>
                 </div>
                 <p className="text-sm text-[#F9FAFB]/40">Send polished post-session reports to families. Parents finally know exactly what happened during that lesson.</p>
               </div>
               <div className="rounded-xl bg-[#111827] border border-[#F97316]/8 p-5">
                 <div className="flex items-center gap-3 mb-2">
-                  <span className="text-xl">🔗</span>
+                  <span className="text-xl"><CTIcon name="connect" size={20} className="text-[#F97316]" /></span>
                   <span className="font-display text-lg text-[#F97316]">SHAREABLE PROFILE</span>
                 </div>
                 <p className="text-sm text-[#F9FAFB]/40">Get a public profile link to share on social media, your website, or in messages to prospective families.</p>
