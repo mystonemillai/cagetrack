@@ -54,7 +54,7 @@ export default function LandingPage() {
             <div className="text-center">
               <div className="w-16 h-16 rounded-2xl bg-[#F97316]/10 flex items-center justify-center mx-auto mb-4 text-3xl"><CTIcon name="connect" size={32} className="text-[#F97316]" /></div>
               <h3 className="font-display text-xl text-[#F97316] mb-2">SESSION REPORTS</h3>
-              <p className="text-sm text-[#F9FAFB]/40 leading-relaxed">After every lesson, coaches send polished session reports directly to families. What was worked on, what improved, and what to focus on next.</p>
+              <p className="text-sm text-[#F9FAFB]/40 leading-relaxed">After every lesson, coaches send polished session reports directly to families. What was worked on, what improved, and what to focus on next. Plus track pitch counts with built-in Pitch Smart guidelines.</p>
             </div>
           </div>
         </div>
@@ -79,7 +79,7 @@ export default function LandingPage() {
           <div className="rounded-2xl bg-[#1F2937] border border-[#F97316]/10 p-6">
             <div className="font-display text-4xl text-[#F97316]/20 mb-3">03</div>
             <h3 className="font-display text-lg text-[#F97316] mb-2">TRACK DEVELOPMENT</h3>
-            <p className="text-sm text-[#F9FAFB]/40">Coaches log observations, assign drills from a 100+ drill library, generate custom development plans, and send session reports to families.</p>
+            <p className="text-sm text-[#F9FAFB]/40">Coaches log observations, assign drills from a 100+ drill library, generate custom development plans, send session reports, and track pitch counts with MLB Pitch Smart guidelines built in.</p>
           </div>
           <div className="rounded-2xl bg-[#1F2937] border border-[#F97316]/10 p-6">
             <div className="font-display text-4xl text-[#F97316]/20 mb-3">04</div>
@@ -130,6 +130,13 @@ export default function LandingPage() {
               </div>
               <div className="rounded-xl bg-[#111827] border border-[#F97316]/8 p-5">
                 <div className="flex items-center gap-3 mb-2">
+                  <span className="text-wheat"><CTIcon name="pitches" size={20} /></span>
+                  <span className="font-display text-lg text-[#F97316]">PITCH SMART TRACKING</span>
+                </div>
+                <p className="text-sm text-[#F9FAFB]/40">Track pitch counts, manage rest days, and see real-time availability with MLB Pitch Smart guidelines built in.</p>
+              </div>
+              <div className="rounded-xl bg-[#111827] border border-[#F97316]/8 p-5">
+                <div className="flex items-center gap-3 mb-2">
                   <span className="text-xl"><CTIcon name="connect" size={20} className="text-[#F97316]" /></span>
                   <span className="font-display text-lg text-[#F97316]">SHAREABLE PROFILE</span>
                 </div>
@@ -154,9 +161,11 @@ export default function LandingPage() {
             <div className="space-y-2 text-sm text-[#F9FAFB]/50 text-left mb-8 min-h-[180px]">
               <p>✓ Coaching profile &amp; directory listing</p>
               <p>✓ Log observations</p>
-              <p>✓ Assign drills</p>
-              <p>✓ CageTrack custom plans</p>
-              <p>✓ Messaging</p>
+              <p>✓ Assign drills from 100+ library</p>
+              <p>✓ Custom development plans</p>
+              <p>✓ Session reports to families</p>
+              <p>✓ Pitch count tracking &amp; Pitch Smart</p>
+              <p>✓ Team management &amp; roster</p>
               <p>✓ Shareable profile link</p>
             </div>
             <Link href="/auth/signup" className="block w-full py-3 bg-[#F97316]/10 border border-[#F97316]/20 text-[#F97316] font-display text-sm tracking-wider rounded-xl hover:bg-[#F97316]/20 transition-colors">Sign Up Free</Link>
@@ -169,11 +178,11 @@ export default function LandingPage() {
             <div className="space-y-2 text-sm text-[#F9FAFB]/50 text-left mb-8 min-h-[180px]">
               <p>✓ Everything coaches get, plus:</p>
               <p>✓ Connect with unlimited coaches</p>
-              <p>✓ Full development tracking</p>
-              <p>✓ CageTrack custom plans</p>
-              <p>✓ Drill library access</p>
-              <p>✓ 14-day free trial</p>
+              <p>✓ View all development tracking</p>
+              <p>✓ Session reports after every lesson</p>
+              <p>✓ Pitch count tracking &amp; Pitch Smart</p>
               <p>✓ One subscription covers the whole family</p>
+              <p>✓ 14-day free trial</p>
             </div>
             <Link href="/auth/signup" className="block w-full py-3 bg-[#F97316] text-[#111827] font-display text-sm tracking-wider rounded-xl hover:bg-[#F97316]/90 transition-colors">Start Free Trial</Link>
           </div>
@@ -186,9 +195,10 @@ export default function LandingPage() {
               <p>✓ Everything in Monthly</p>
               <p>✓ Save $20 per year</p>
               <p>✓ Lock in your rate</p>
-              <p>✓ Best value</p>
-              <p>✓ 14-day free trial</p>
+              <p>✓ Full development tracking</p>
+              <p>✓ Pitch Smart &amp; team management</p>
               <p>✓ One subscription covers the whole family</p>
+              <p>✓ 14-day free trial</p>
               <p>&nbsp;</p>
             </div>
             <Link href="/auth/signup" className="block w-full py-3 bg-[#F97316]/10 border border-[#F97316]/20 text-[#F97316] font-display text-sm tracking-wider rounded-xl hover:bg-[#F97316]/20 transition-colors">Start Free Trial</Link>
