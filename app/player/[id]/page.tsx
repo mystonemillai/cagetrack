@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase-browser';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { calculatePitchAvailability, getMaxPitches } from '@/lib/pitch-smart';
+import { CTIcon, BaseballIcon, CoachCapIcon } from '@/components/icons';
 
 const DRILL_CATEGORIES = ['Hitting', 'Pitching Fundamentals', 'Pitching Accuracy', 'Pitcher Recovery', 'Catcher', 'First Base', 'Third Base', 'Middle Infield', 'Infield Fundamentals', 'Outfield Fundamentals', 'Center Field', 'Corner Outfield', 'Mental Game'];
 const OBS_CATEGORIES = ['Hitting', 'Pitching', 'Fielding', 'Catching', 'Baserunning', 'Mental Game', 'General'];
@@ -386,16 +387,16 @@ export default function PlayerDetailPage() {
             {isCoach && (
               <div className="grid grid-cols-2 gap-3">
                 <button onClick={() => setActiveTab('observations')} className="rounded-xl bg-wheat/10 border border-wheat/20 p-4 text-center hover:border-wheat/30 transition-all">
-                  <div className="text-xl mb-1">👁️</div><div className="text-[10px] text-wheat uppercase tracking-wider">Add Observation</div>
+                  <div className="flex justify-center text-wheat mb-1"><CTIcon name="observation" size={22} /></div><div className="text-[10px] text-wheat uppercase tracking-wider">Add Observation</div>
                 </button>
                 <button onClick={() => setActiveTab('drills')} className="rounded-xl bg-wheat/10 border border-wheat/20 p-4 text-center hover:border-wheat/30 transition-all">
-                  <div className="text-xl mb-1">📋</div><div className="text-[10px] text-wheat uppercase tracking-wider">Assign Drill</div>
+                  <div className="flex justify-center text-wheat mb-1"><CTIcon name="drill" size={22} /></div><div className="text-[10px] text-wheat uppercase tracking-wider">Assign Drill</div>
                 </button>
                 <button onClick={() => setActiveTab('ai-plans')} className="rounded-xl bg-wheat/10 border border-wheat/20 p-4 text-center hover:border-wheat/30 transition-all">
-                  <div className="text-xl mb-1">🧠</div><div className="text-[10px] text-wheat uppercase tracking-wider">Custom Plan</div>
+                  <div className="flex justify-center text-wheat mb-1"><CTIcon name="plan" size={22} /></div><div className="text-[10px] text-wheat uppercase tracking-wider">Custom Plan</div>
                 </button>
                 <button onClick={() => setActiveTab('session-report')} className="rounded-xl bg-wheat/10 border border-wheat/20 p-4 text-center hover:border-wheat/30 transition-all">
-                  <div className="text-xl mb-1">📝</div><div className="text-[10px] text-wheat uppercase tracking-wider">Log Session</div>
+                  <div className="flex justify-center text-wheat mb-1"><CTIcon name="session" size={22} /></div><div className="text-[10px] text-wheat uppercase tracking-wider">Log Session</div>
                 </button>
               </div>
             )}
@@ -468,7 +469,7 @@ export default function PlayerDetailPage() {
                     ...aiPlans.map(p => ({ type: 'ai', date: p.created_at, data: p }))
                   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 8).map((item, i) => (
                     <div key={i} className="flex gap-3 items-start py-2 border-b border-wheat/5 last:border-0">
-                      <div className="text-lg mt-0.5">{item.type === 'observation' ? '👁️' : item.type === 'drill' ? '📋' : '🧠'}</div>
+                      <div className="mt-0.5 text-wheat"><CTIcon name={item.type === 'observation' ? 'observation' : item.type === 'drill' ? 'drill' : 'plan'} size={18} /></div>
                       <div className="flex-1 min-w-0">
                         <div className="text-sm text-offwhite/80 line-clamp-2">
                           {item.type === 'observation' && item.data.observation_text}
@@ -494,7 +495,7 @@ export default function PlayerDetailPage() {
                         {pc.coach_profiles?.profiles?.avatar_url ? (
                           <img src={pc.coach_profiles.profiles.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover border border-wheat/20 flex-shrink-0" />
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-wheat/10 flex items-center justify-center text-lg flex-shrink-0">🧢</div>
+                          <div className="w-10 h-10 rounded-full bg-wheat/10 flex items-center justify-center text-wheat flex-shrink-0"><CoachCapIcon size={20} /></div>
                         )}
                         <div className="min-w-0 flex-1">
                           <div className="text-sm font-medium truncate">{pc.coach_profiles?.display_name || 'Coach'}</div>
@@ -525,7 +526,7 @@ export default function PlayerDetailPage() {
           <div className="space-y-4">
             {!isCoach && !hasSubscription && (
               <div className="rounded-xl bg-wheat/5 border border-wheat/20 p-5 text-center">
-                <div className="text-2xl mb-2">🔒</div>
+                <div className="flex justify-center text-wheat mb-2"><CTIcon name="lock" size={28} /></div>
                 <h3 className="font-display text-lg text-wheat mb-1">Subscribe to View New Content</h3>
                 <p className="text-xs text-offwhite/40 mb-3">Your coaches have added {observations.length} observations. Subscribe to view the latest updates.</p>
                 <a href="/settings" className="inline-block px-6 py-2.5 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors">Subscribe Now</a>
@@ -576,7 +577,7 @@ export default function PlayerDetailPage() {
           <div className="space-y-4">
             {!isCoach && !hasSubscription && (
               <div className="rounded-xl bg-wheat/5 border border-wheat/20 p-5 text-center">
-                <div className="text-2xl mb-2">🔒</div>
+                <div className="flex justify-center text-wheat mb-2"><CTIcon name="lock" size={28} /></div>
                 <h3 className="font-display text-lg text-wheat mb-1">Subscribe to View New Content</h3>
                 <p className="text-xs text-offwhite/40 mb-3">Your coaches have assigned {assignments.length} drills. Subscribe to view the latest assignments.</p>
                 <a href="/settings" className="inline-block px-6 py-2.5 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors">Subscribe Now</a>
@@ -681,7 +682,7 @@ export default function PlayerDetailPage() {
           <div className="space-y-4">
             {!isCoach && !hasSubscription && (
               <div className="rounded-xl bg-wheat/5 border border-wheat/20 p-5 text-center">
-                <div className="text-2xl mb-2">🔒</div>
+                <div className="flex justify-center text-wheat mb-2"><CTIcon name="lock" size={28} /></div>
                 <h3 className="font-display text-lg text-wheat mb-1">Subscribe to View New Content</h3>
                 <p className="text-xs text-offwhite/40 mb-3">Your coaches have created {aiPlans.length} custom plans. Subscribe to view them.</p>
                 <a href="/settings" className="inline-block px-6 py-2.5 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors">Subscribe Now</a>
@@ -721,7 +722,7 @@ export default function PlayerDetailPage() {
           <div className="space-y-4">
             {!isCoach && !hasSubscription ? (
               <div className="rounded-xl bg-wheat/5 border border-wheat/20 p-5 text-center">
-                <div className="text-2xl mb-2">🔒</div>
+                <div className="flex justify-center text-wheat mb-2"><CTIcon name="lock" size={28} /></div>
                 <h3 className="font-display text-lg text-wheat mb-1">Subscribe to Access Messages</h3>
                 <p className="text-xs text-offwhite/40 mb-3">You have {messages.length} messages. Subscribe to view and send messages.</p>
                 <a href="/settings" className="inline-block px-6 py-2.5 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors">Subscribe Now</a>
@@ -760,7 +761,7 @@ export default function PlayerDetailPage() {
           <div className="space-y-4">
             {!isCoach && !hasSubscription && (
               <div className="rounded-xl bg-wheat/5 border border-wheat/20 p-5 text-center">
-                <div className="text-2xl mb-2">🔒</div>
+                <div className="flex justify-center text-wheat mb-2"><CTIcon name="lock" size={28} /></div>
                 <h3 className="font-display text-lg text-wheat mb-1">Subscribe to View Session Reports</h3>
                 <p className="text-xs text-offwhite/40 mb-3">Your coaches have logged {sessionReports.length} session reports. Subscribe to view them.</p>
                 <a href="/settings" className="inline-block px-6 py-2.5 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors">Subscribe Now</a>
@@ -803,7 +804,7 @@ export default function PlayerDetailPage() {
                   <div key={report.id} className="rounded-xl bg-navy-light border border-wheat/8 p-6">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">📝</span>
+                        <span className="text-wheat"><CTIcon name="session" size={18} /></span>
                         <span className="text-sm font-medium text-wheat">{report.coach_name || 'Coach'}</span>
                       </div>
                       <span className="text-[10px] text-offwhite/30">{new Date(report.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
@@ -820,10 +821,10 @@ export default function PlayerDetailPage() {
 
       <nav className="fixed bottom-0 w-full z-50 bg-navy/95 backdrop-blur-xl border-t border-wheat/8 sm:hidden">
         <div className="flex justify-around py-2">
-          <Link href="/dashboard" className="flex flex-col items-center gap-0.5 px-3 py-1"><span className="text-lg">🏠</span><span className="text-[10px] text-offwhite/30">Home</span></Link>
-          <Link href="/drills" className="flex flex-col items-center gap-0.5 px-3 py-1"><span className="text-lg">📋</span><span className="text-[10px] text-offwhite/30">Drills</span></Link>
-          <Link href="/coaches" className="flex flex-col items-center gap-0.5 px-3 py-1"><span className="text-lg">🧢</span><span className="text-[10px] text-offwhite/30">Coaches</span></Link>
-          <Link href="/settings" className="flex flex-col items-center gap-0.5 px-3 py-1"><span className="text-lg">⚙️</span><span className="text-[10px] text-offwhite/30">Settings</span></Link>
+          <Link href="/dashboard" className="flex flex-col items-center gap-0.5 px-3 py-1"><span className="text-offwhite/30"><CTIcon name="home" size={20} /></span><span className="text-[10px] text-offwhite/30">Home</span></Link>
+          <Link href="/drills" className="flex flex-col items-center gap-0.5 px-3 py-1"><span className="text-offwhite/30"><CTIcon name="drill" size={20} /></span><span className="text-[10px] text-offwhite/30">Drills</span></Link>
+          <Link href="/coaches" className="flex flex-col items-center gap-0.5 px-3 py-1"><span className="text-offwhite/30"><CTIcon name="coaches" size={20} /></span><span className="text-[10px] text-offwhite/30">Coaches</span></Link>
+          <Link href="/settings" className="flex flex-col items-center gap-0.5 px-3 py-1"><span className="text-offwhite/30"><CTIcon name="settings" size={20} /></span><span className="text-[10px] text-offwhite/30">Settings</span></Link>
         </div>
       </nav>
     </div>
