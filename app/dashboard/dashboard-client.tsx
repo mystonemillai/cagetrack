@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { initStatusBar, initPushNotifications, hapticTap } from '@/lib/native';
 import { calculatePitchAvailability, getMaxPitches } from '@/lib/pitch-smart';
+import { CTIcon, BaseballIcon, CoachCapIcon, BatIcon } from '@/components/icons';
 
 interface DashboardClientProps {
   profile: any;
@@ -343,7 +344,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
         </nav>
         <main className="pt-20 pb-8 px-4 max-w-lg mx-auto">
           <div className="text-center mb-8">
-            <div className="w-14 h-14 rounded-xl bg-wheat/10 flex items-center justify-center mx-auto mb-4 text-2xl">⚾</div>
+            <div className="w-14 h-14 rounded-xl bg-wheat/10 flex items-center justify-center mx-auto mb-4 text-wheat"><BaseballIcon size={28} /></div>
             <h1 className="font-display text-3xl sm:text-4xl mb-2">{isPlayer ? 'Complete Your Profile' : 'Add Your Player'}</h1>
             <p className="text-offwhite/40">{isPlayer ? 'Set up your development profile.' : "Create your player's development profile."}</p>
           </div>
@@ -412,7 +413,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
               {profile?.avatar_url ? (
                 <img src={profile.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover border border-wheat/20" />
               ) : (
-                <div className="w-6 h-6 rounded-full bg-wheat/10 flex items-center justify-center text-[10px]">👤</div>
+                <div className="w-6 h-6 rounded-full bg-wheat/10 flex items-center justify-center text-offwhite/40"><CTIcon name="user" size={14} /></div>
               )}
               <span className="text-xs text-offwhite/40">{profile?.name}</span>
             </div>
@@ -428,7 +429,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
           {profile?.avatar_url ? (
             <img src={profile.avatar_url} alt="" className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-3 border-wheat/25 shadow-lg" />
           ) : (
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-wheat/10 flex items-center justify-center text-3xl flex-shrink-0">👤</div>
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-wheat/10 flex items-center justify-center text-offwhite/30 flex-shrink-0"><CTIcon name="user" size={36} /></div>
           )}
           <div>
           <h1 className="font-display text-4xl sm:text-5xl">{profile?.name ? `Hey, ${profile.name.split(' ')[0]}` : 'Welcome'}</h1>
@@ -446,7 +447,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
             <div className="space-y-2">
               {notifications.slice(0, 5).map((n, i) => (
                 <div key={i} className="flex items-start gap-2">
-                  <span className="text-xs mt-0.5">{n.type === 'observation' ? '👁️' : n.type === 'drill' ? '📋' : n.type === 'ai' ? '🧠' : n.type === 'connection' ? '🤝' : n.type === 'session' ? '📝' : '💬'}</span>
+                  <span className="mt-0.5"><CTIcon name={n.type === 'observation' ? 'observation' : n.type === 'drill' ? 'drill' : n.type === 'ai' ? 'plan' : n.type === 'connection' ? 'connect' : n.type === 'session' ? 'session' : 'messages'} size={14} /></span>
                   <span className="text-xs text-offwhite/60">{n.text}</span>
                 </div>
               ))}
@@ -490,7 +491,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
           <>
             {!hasPlayers && (
               <div className="rounded-xl bg-navy-light border border-wheat/10 p-8 text-center mb-8">
-                <div className="w-14 h-14 rounded-xl bg-wheat/10 flex items-center justify-center mx-auto mb-4 text-2xl">⚾</div>
+                <div className="w-14 h-14 rounded-xl bg-wheat/10 flex items-center justify-center mx-auto mb-4 text-wheat"><BaseballIcon size={28} /></div>
                 <h2 className="font-display text-2xl mb-2">Get Started</h2>
                 <p className="text-offwhite/40 mb-6 max-w-sm mx-auto">Add your player or link to an existing profile.</p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -526,9 +527,9 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
             )}
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              <QuickAction icon="🧢" label="Find Coaches" href="/coaches" />
-              <QuickAction icon="📖" label="Dev Blog" href="/blog" />
-              <QuickAction icon="⚙️" label="Settings" href="/settings" />
+              <QuickAction icon={<CTIcon name="coaches" size={22} />} label="Find Coaches" href="/coaches" />
+              <QuickAction icon={<CTIcon name="session" size={22} />} label="Dev Blog" href="/blog" />
+              <QuickAction icon={<CTIcon name="settings" size={22} />} label="Settings" href="/settings" />
             </div>
 
             {isFamily && hasPlayers && (
@@ -541,7 +542,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
           <>
             {!coachProfile && (
               <div className="rounded-xl bg-navy-light border border-wheat/10 p-8 text-center mb-6">
-                <div className="w-14 h-14 rounded-xl bg-wheat/10 flex items-center justify-center mx-auto mb-4 text-2xl">🧢</div>
+                <div className="w-14 h-14 rounded-xl bg-wheat/10 flex items-center justify-center mx-auto mb-4 text-wheat"><CoachCapIcon size={28} /></div>
                 <h2 className="font-display text-2xl mb-2">Set Up Your Coach Profile</h2>
                 <p className="text-offwhite/40 mb-6 max-w-sm mx-auto">Build your profile so players and families can find you.</p>
                 <Link href="/coach-setup" className="inline-block px-6 py-3 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors">Set Up Profile</Link>
@@ -734,10 +735,10 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
             )}
             <CoachInviteCodeEntry coachProfile={coachProfile} />
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
-              <QuickAction icon="📋" label="Drill Library" href="/drills" />
-              <QuickAction icon="✏️" label="My Drills" href="/my-drills" />
-              <QuickAction icon="📖" label="Dev Blog" href="/blog" />
-              <QuickAction icon="⚙️" label="Settings" href="/settings" />
+              <QuickAction icon={<CTIcon name="drill" size={22} />} label="Drill Library" href="/drills" />
+              <QuickAction icon={<BatIcon size={22} />} label="My Drills" href="/my-drills" />
+              <QuickAction icon={<CTIcon name="session" size={22} />} label="Dev Blog" href="/blog" />
+              <QuickAction icon={<CTIcon name="settings" size={22} />} label="Settings" href="/settings" />
             </div>
           </>
         )}
@@ -745,10 +746,10 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
 
       <nav className="fixed bottom-0 w-full z-50 bg-navy/95 backdrop-blur-xl border-t border-wheat/8 sm:hidden">
         <div className="flex justify-around py-2">
-          <BottomNavItem icon="🏠" label="Home" href="/dashboard" active />
-          <BottomNavItem icon="📋" label="Drills" href="/drills" />
-          <BottomNavItem icon="🧢" label="Coaches" href="/coaches" />
-          <BottomNavItem icon="⚙️" label="Settings" href="/settings" />
+          <BottomNavItem icon={<CTIcon name="home" size={20} />} label="Home" href="/dashboard" active />
+          <BottomNavItem icon={<CTIcon name="drill" size={20} />} label="Drills" href="/drills" />
+          <BottomNavItem icon={<CTIcon name="coaches" size={20} />} label="Coaches" href="/coaches" />
+          <BottomNavItem icon={<CTIcon name="settings" size={20} />} label="Settings" href="/settings" />
         </div>
       </nav>
     </div>
@@ -809,19 +810,19 @@ function CoachInviteCodeEntry({ coachProfile }: { coachProfile: any }) {
   );
 }
 
-function QuickAction({ icon, label, href }: { icon: string; label: string; href: string }) {
+function QuickAction({ icon, label, href }: { icon: React.ReactNode; label: string; href: string }) {
   return (
     <Link href={href} className="rounded-xl bg-navy-light border border-wheat/6 p-4 text-center hover:border-wheat/15 transition-all">
-      <div className="text-xl mb-1">{icon}</div>
+      <div className="flex justify-center text-offwhite/50 mb-1">{icon}</div>
       <div className="text-xs text-offwhite/50 font-medium">{label}</div>
     </Link>
   );
 }
 
-function BottomNavItem({ icon, label, href, active }: { icon: string; label: string; href: string; active?: boolean }) {
+function BottomNavItem({ icon, label, href, active }: { icon: React.ReactNode; label: string; href: string; active?: boolean }) {
   return (
     <Link href={href} className="flex flex-col items-center gap-0.5 px-3 py-1">
-      <span className="text-lg">{icon}</span>
+      <span className={`${active ? 'text-wheat' : 'text-offwhite/30'}`}>{icon}</span>
       <span className={`text-[10px] ${active ? 'text-wheat' : 'text-offwhite/30'}`}>{label}</span>
     </Link>
   );
