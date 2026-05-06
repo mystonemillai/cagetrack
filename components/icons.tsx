@@ -61,15 +61,14 @@ export function BatIcon({ size = 24, className = '' }: { size?: number; classNam
   );
 }
 
-// Custom cap SVG - used for coach placeholder
+// Coach placeholder icon
 export function CoachCapIcon({ size = 24, className = '' }: { size?: number; className?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M 3 14 C 3 14, 5 8, 12 8 C 19 8, 21 14, 21 14" />
-      <path d="M 3 14 L 21 14" />
-      <path d="M 12 8 L 12 5" />
-      <path d="M 10 5 L 14 5" />
-      <ellipse cx="12" cy="14" rx="10" ry="3" />
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+      <path d="M6 3l2 2" />
+      <path d="M18 3l-2 2" />
     </svg>
   );
 }
