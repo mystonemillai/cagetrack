@@ -365,6 +365,15 @@ export default function SettingsPage() {
               {linkError && <p className="text-red-400 text-xs mt-2">{linkError}</p>}
             </div>
           )}
+          
+          <div className="rounded-xl bg-navy-light border border-wheat/8 p-6">
+            <h2 className="font-display text-lg text-wheat mb-1">Organization Code</h2>
+            <p className="text-xs text-offwhite/40 mb-4">If your team or organization gave you an access code, enter it here for free access.</p>
+            <form onSubmit={async (e) => { e.preventDefault(); const input = (e.target as any).orgcode.value.trim().toUpperCase(); if (!input) return; const { data: org } = await supabase.from('org_codes').select('*').eq('code', input).eq('is_active', true).single(); if (!org) { alert('Invalid or expired code.'); return; } if (org.max_redemptions && org.redemption_count >= org.max_redemptions) { alert('This code has reached its maximum number of uses.'); return; } const { data: { user } } = await supabase.auth.getUser(); if (!user) return; await supabase.from('subscriptions').upsert({ billing_user_id: user.id, status: 'active', plan_type: 'organization', payment_provider: 'org_code', apple_product_id: org.code }, { onConflict: 'billing_user_id' }); await supabase.from('org_codes').update({ redemption_count: (org.redemption_count || 0) + 1 }).eq('id', org.id); alert('Welcome to ' + org.org_name + '! Your access is now active.'); window.location.reload(); }} className="flex gap-2">
+              <input name="orgcode" type="text" className="flex-1 p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors font-display tracking-widest uppercase text-center" placeholder="ORG CODE" maxLength={20} />
+              <button type="submit" className="px-5 py-3 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors">Apply</button>
+            </form>
+          </div>
 
           <Link href="/help" className="block w-full p-4 rounded-xl bg-navy-light border border-wheat/8 text-center text-sm text-offwhite/50 hover:text-wheat hover:border-wheat/20 transition-all">Help Center</Link>
 
