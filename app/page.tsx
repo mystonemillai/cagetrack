@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { CTIcon, BaseballIcon } from '@/components/icons';
 
 export default function LandingPage() {
   return (
