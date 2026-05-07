@@ -25,18 +25,21 @@ export default function ClaimProfilePage() {
     // Look up the invite code in parent_links
     const { data, error: lookupError } = await supabase
       .from('parent_links')
-      .select('*, players(first_name, last_name)')
+      .select('player_id, link_code')
       .eq('link_code', inviteCode.trim().toUpperCase())
       .eq('status', 'pending')
       .single();
-
     if (lookupError || !data) {
       setError('Invalid or expired invite code. Check with your parent and try again.');
       setLoading(false);
       return;
     }
-
-    setPlayerName(`${data.players.first_name} ${data.players.last_name}`);
+    const { data: playerData } = await supabase
+      .from('players')
+      .select('first_name, last_name')
+      .eq('id', data.player_id)
+      .single();
+    setPlayerName(playerData ? `${playerData.first_name} ${playerData.last_name}` : 'Your Player');
     setStep('signup');
     setLoading(false);
   }
