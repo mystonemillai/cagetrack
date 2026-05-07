@@ -48,26 +48,19 @@ export default function ClaimProfilePage() {
     e.preventDefault();
     setError('');
     setLoading(true);
-
-    // Create the account
     const { data: authData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: {
-          name,
-          role: 'player',
-        },
-        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
+        data: { name, role: 'player' },
+        emailRedirectTo: `${window.location.origin}/auth/claim-callback?code=${inviteCode.trim().toUpperCase()}`,
       },
     });
-
     if (signUpError) {
       setError(signUpError.message);
       setLoading(false);
       return;
     }
-
     setSuccess(true);
     setLoading(false);
   }
