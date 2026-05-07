@@ -42,14 +42,7 @@ export default function ClaimProfilePage() {
     const pName = playerData ? `${playerData.first_name} ${playerData.last_name}` : 'Your Player';
     setPlayerName(pName);
     setName(pName);
-    if (playerData) {
-      const { data: parentProfile } = await supabase.from('profiles').select('email').eq('id', playerData.owner_user_id || '').single();
-      if (parentProfile?.email) {
-        const [localPart, domain] = parentProfile.email.split('@');
-        const playerFirst = playerData.first_name?.toLowerCase() || 'player';
-        setEmail(`${localPart}+${playerFirst}@${domain}`);
-      }
-    }
+    
     setStep('signup');
     setLoading(false);
   }
