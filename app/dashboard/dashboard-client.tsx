@@ -496,7 +496,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
                 <p className="text-offwhite/40 mb-6 max-w-sm mx-auto">Add your player or link to an existing profile.</p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <button onClick={() => setShowCreatePlayer(true)} className="px-6 py-3 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors">Add a New Player</button>
-                  {isFamily && <Link href="/settings" className="px-6 py-3 bg-wheat/10 border border-wheat/20 text-wheat font-display text-sm tracking-wider rounded-lg hover:bg-wheat/20 transition-colors text-center">Link to Existing Player</Link>}
+                  {(isFamily || isPlayer) && <Link href="/settings" className="px-6 py-3 bg-wheat/10 border border-wheat/20 text-wheat font-display text-sm tracking-wider rounded-lg hover:bg-wheat/20 transition-colors text-center">Link to Existing Player</Link>}
                 </div>
               </div>
             )}
