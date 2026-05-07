@@ -1,9 +1,9 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase-browser';
 import { useSearchParams, useRouter } from 'next/navigation';
 
-export default function ClaimCallbackPage() {
+function ClaimCallbackContent() {
   const supabase = createClient();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -17,7 +17,6 @@ export default function ClaimCallbackPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setStatus('Please log in first.'); return; }
 
-      // Find the parent link by code
       const { data: link } = await supabase
         .from('parent_links')
         .select('player_id')
@@ -27,10 +26,7 @@ export default function ClaimCallbackPage() {
 
       if (!link) { setStatus('Invalid or already claimed code.'); return; }
 
-      // Update the player's owner to this user
       await supabase.from('players').update({ owner_user_id: user.id }).eq('id', link.player_id);
-
-      // Update the parent link to active
       await supabase.from('parent_links').update({ status: 'active' }).eq('link_code', code);
 
       setStatus('Profile linked! Redirecting...');
@@ -46,5 +42,13 @@ export default function ClaimCallbackPage() {
         <p className="text-offwhite/60 text-lg">{status}</p>
       </div>
     </div>
+  );
+}
+
+export default function ClaimCallbackPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><p className="text-offwhite/40">Loading...</p></div>}>
+      <ClaimCallbackContent />
+    </Suspense>
   );
 }
