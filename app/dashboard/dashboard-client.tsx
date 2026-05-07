@@ -495,8 +495,14 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
                 <h2 className="font-display text-2xl mb-2">Get Started</h2>
                 <p className="text-offwhite/40 mb-6 max-w-sm mx-auto">Add your player or link to an existing profile.</p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <button onClick={() => setShowCreatePlayer(true)} className="px-6 py-3 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors">Add a New Player</button>
-                  {(isFamily || isPlayer) && <Link href="/settings" className="px-6 py-3 bg-wheat/10 border border-wheat/20 text-wheat font-display text-sm tracking-wider rounded-lg hover:bg-wheat/20 transition-colors text-center">Link to Existing Player</Link>}
+                  <button onClick={() => setShowCreatePlayer(true)} className="px-6 py-3 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors">{isPlayer ? 'Create My Profile' : 'Add a New Player'}</button>
+                </div>
+                <div className="mt-4 pt-4 border-t border-wheat/10">
+                  <p className="text-xs text-offwhite/30 mb-3 text-center">Already have a Player Code from a parent?</p>
+                  <form onSubmit={async (e) => { e.preventDefault(); const code = (e.target as any).plcode.value.trim().toUpperCase(); if (!code) return; const { data: player } = await supabase.from('players').select('id, first_name, last_name').eq('invite_code', code).single(); if (!player) { alert('Invalid player code. Check with your parent.'); return; } await supabase.from('parent_links').insert({ parent_user_id: userId, player_id: player.id, status: 'active' }); alert('Linked to ' + player.first_name + ' ' + player.last_name + '!'); window.location.reload(); }} className="flex gap-2 max-w-sm mx-auto">
+                    <input name="plcode" type="text" className="flex-1 p-3 bg-navy-light border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors font-display tracking-widest uppercase text-center" placeholder="PL-XXXXX" maxLength={10} />
+                    <button type="submit" className="px-5 py-3 bg-wheat/10 border border-wheat/20 text-wheat font-display text-sm tracking-wider rounded-lg hover:bg-wheat/20 transition-colors">Link</button>
+                  </form>
                 </div>
               </div>
             )}
