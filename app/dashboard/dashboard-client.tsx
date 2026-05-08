@@ -510,24 +510,29 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
             {hasPlayers && (
               <div className="space-y-4 mb-8">
                 {ownedPlayers.map((player) => (
-                  <Link key={player.id} href={`/player/${player.id}`} className="block rounded-xl bg-navy-light border border-wheat/8 p-6 hover:border-wheat/20 transition-all cursor-pointer">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="font-display text-xl tracking-wide">{player.first_name} {player.last_name}</h3>
-                        <div className="flex items-center gap-3 mt-1">
-                          <span className="text-xs text-wheat bg-wheat/10 px-2 py-0.5 rounded">{player.age_group}</span>
-                          {player.current_team && <span className="text-xs text-offwhite/40">{player.current_team}</span>}
-                          {player.city && player.state && <span className="text-xs text-offwhite/30">{player.city}, {player.state}</span>}
-                        </div>
-                        {player.positions && player.positions.length > 0 && (
-                          <div className="flex gap-2 mt-2">
-                            {player.positions.map((pos: string) => (<span key={pos} className="text-xs text-offwhite/30 bg-offwhite/5 px-2 py-0.5 rounded">{pos}</span>))}
+                  <div key={player.id} className="rounded-xl bg-navy-light border border-wheat/8 p-6">
+                    <Link href={`/player/${player.id}`} className="block hover:text-wheat transition-all cursor-pointer">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-display text-xl tracking-wide">{player.first_name} {player.last_name}</h3>
+                          <div className="flex items-center gap-3 mt-1">
+                            <span className="text-xs text-wheat bg-wheat/10 px-2 py-0.5 rounded">{player.age_group}</span>
+                            {player.current_team && <span className="text-xs text-offwhite/40">{player.current_team}</span>}
+                            {player.city && player.state && <span className="text-xs text-offwhite/30">{player.city}, {player.state}</span>}
                           </div>
-                        )}
+                          {player.positions && player.positions.length > 0 && (
+                            <div className="flex gap-2 mt-2">
+                              {player.positions.map((pos: string) => (<span key={pos} className="text-xs text-offwhite/30 bg-offwhite/5 px-2 py-0.5 rounded">{pos}</span>))}
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-offwhite/20 text-xl">→</span>
                       </div>
-                      <span className="text-offwhite/20 text-xl">→</span>
-                    </div>
-                  </Link>
+                    </Link>
+                    {isFamily && (
+                      <button onClick={async () => { if (!confirm(`Remove ${player.first_name} ${player.last_name}? This will delete the player profile and all associated data.`)) return; await supabase.from('parent_links').delete().eq('player_id', player.id); await supabase.from('players').delete().eq('id', player.id); window.location.reload(); }} className="mt-3 text-[10px] text-offwhite/15 hover:text-red-400 transition-colors">Remove Player</button>
+                    )}
+                  </div>
                 ))}
               </div>
             )}
