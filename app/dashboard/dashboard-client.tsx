@@ -498,7 +498,7 @@ export default function DashboardClient({ profile, userId }: DashboardClientProp
                   <p className="text-xs text-offwhite/40 mb-3">Have a code from a parent?</p>
                   <form onSubmit={async (e) => { e.preventDefault(); const code = (e.target as any).plcode.value.trim().toUpperCase(); if (!code) return; const { data: link } = await supabase.from('parent_links').select('player_id, players(first_name, last_name)').eq('link_code', code).eq('status', 'pending').single(); if (!link) { alert('Invalid code. Check with your parent.'); return; } await supabase.from('parent_links').update({ parent_user_id: userId, status: 'active' }).eq('link_code', code); await supabase.from('players').update({ owner_user_id: userId }).eq('id', link.player_id); window.location.reload(); }} className="space-y-2">
                       <input name="plcode" type="text" className="w-full p-3 bg-navy border border-wheat/15 rounded-lg text-offwhite focus:border-wheat outline-none transition-colors font-display tracking-widest uppercase text-center" placeholder="PL-XXXXX" maxLength={10} />
-                      <button type="submit" className="w-full px-5 py-3 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors">Link</button>
+                      <button type="submit" className="px-8 py-2.5 bg-wheat text-navy font-display text-sm tracking-wider rounded-lg hover:bg-wheat/90 transition-colors">Link</button>
                     </form>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
